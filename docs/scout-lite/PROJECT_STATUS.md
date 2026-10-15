@@ -6,6 +6,10 @@
 
 没有客户稳定固件。本文件不把编译通过写成实机可用。
 
+通道 A 只读下面这一行，当作已经处理过的上游稳定 tag。稳定 tag 指 `justcallmekoko/ESP32Marauder` 最新的非 draft、非 prerelease Release。人把这一行改成新 tag 之后，下一次检查才把它当成已处理。
+
+scout-lite-upstream-stable-tag: v1.18.0
+
 已有文档，只链接，不在这里复述：
 
 - `docs/scout-lite/PRODUCT.md`
@@ -36,7 +40,7 @@
 | 任务 | Agent / 分支 / PR | 目标 | 阻塞/状态 | 下一动作 |
 | --- | --- | --- | --- | --- |
 | 源码与功能审计 | [PR #1](https://github.com/pingequalab/ESP32Marauder/pull/1)，head `b242f00`，merge `dc263eb` | 文档基线与功能矩阵 | MERGED | 不重复审计 |
-| 章程与状态入库 | 分支 `docs/scout-lite-charter` | 保存章程、合并 `AGENTS.md`、填写本状态 | 草案。未合并 | 合并需要 Colin 明确批准 |
+| 章程与状态入库 | 分支 `docs/scout-lite-charter` | 保存章程、合并 `AGENTS.md`、填写本状态、加入通道 A | 草案。未合并 | Colin 已于 2026-10-15 批准：required CI 为绿后可合入 `master`。Agent 不合并。不是固件发布，不刷机 |
 
 ## 3. P0 功能证据矩阵
 
@@ -57,14 +61,14 @@
 | ID | PR | 类型（upstream / board / extension） | 当前状态 | 下一步 |
 | --- | --- | --- | --- | --- |
 | 审计 | [PR #1](https://github.com/pingequalab/ESP32Marauder/pull/1) | 文档 | MERGED，`dc263eb` | 不重开 |
-| 章程 | 分支 `docs/scout-lite-charter` | 文档 | 草案，未合并 | 等 Colin 批准后才合并 |
+| 章程 | 分支 `docs/scout-lite-charter` | 文档 | 草案，未合并 | Colin 已于 2026-10-15 批准：required CI 为绿后可合入 `master`。Agent 不执行合并 |
 | 上游补丁 | 无 | upstream | 无给上游的 PR | 没有已证实的通用缺陷可送上游 |
 
 ## 5. 当前三个最高价值任务
 
-1. 任何板级补丁之前，先拿到 Scout Lite 原理图，或一份实测的引脚 / Flash / PSRAM 日志。依赖：现在没有这份硬件证据。不适合上游 PR。
+1. 任何板级补丁之前，先拿到已确认的 Scout Lite 原理图，或一份实测的引脚 / Flash / PSRAM 日志。2026-10-15 到达的原理图页尚未确认，不能当证据。依赖：确认后的硬件证据。不适合上游 PR。
 2. 只有已经存在真实 FAP 命令清单或抓包时，才做 CLI/SigRoam 合约测试。在证明真实不兼容之前，只做测试，不改协议。依赖：任务所需的 FAP 命令清单或抓包；本仓库没有这份材料。在那之前不适合上游 PR。
-3. 第 1 项到手之前不开始 M2 固件。通道 A 自动化等 Colin 批准，本变更不实现它。依赖：任务 1 的硬件证据；通道 A 另需 Colin 批准。不适合上游 PR。
+3. 第 1 项到手之前不开始 M2 固件。通道 A 已于 2026-10-15 批准，workflow 是 `.github/workflows/scout-lite-upstream-tag.yml`，合入 `master` 之后才按日运行。依赖：任务 1 的硬件证据。不适合上游 PR。不打开固件 PR。
 
 ## 6. Decision Pending
 
@@ -74,7 +78,7 @@
 - 章程写稳定分支 `main`。这个 fork 用 `master`。
 - 章程枚举和矩阵的五个中文标签不一致。`FEATURE_MATRIX.md` 表头已加对照：已验证 → 仅构建或自动化测试（E2）；源码支持 → `SOURCE_PRESENT_UNTESTED`（E1）；未知 → `UNKNOWN`。没有改每一行的标签，也没有新增 `CONFIRMED_WORKING`、`INTEGRATION_BLOCKED`、`NOT_APPLICABLE`。
 - 「可以直接刷 DevKit 固件」保持 UNKNOWN。
-- 本变更不添加每日 GitHub Action，也不添加 Cursor subscription。通道 A 只作为等待批准的提案：每天检查一次 tag；没有变化就安静结束；稳定 tag 移动时只开一个 issue。安静的那一天不跑 AI。`AGENTS.md` 仍要求自动化由事件驱动。批准之前不把这条定时检查写进 workflow。
+- 原理图页已于 2026-10-15 到达，尚未确认。本变更不把原理图结论写入 `HARDWARE.md`。引脚、Flash/PSRAM 容量仍是 UNKNOWN。
 
 ## 7. 最近已完成工作与证据
 
@@ -82,11 +86,12 @@
 | --- | --- | --- | --- |
 | 2026-10-15 | 审计文档并入 `master` | [PR #1](https://github.com/pingequalab/ESP32Marauder/pull/1)，merge `dc263ebe968770f2ec4720524a1e5fc322105ffa`，head `b242f00`。该 head 上 workflow `Firmware Unit Tests` 的 `Native Unity tests`、workflow `Scout Lite CI` 的 `Native Unity tests`、以及 `Compile MARAUDER_C5` 为 SUCCESS。`d3ceb28` 本地 app bin SHA256 `1d572f57bb1f90cf063952672414413e194ee7aef00de1c66218238dc26b60a8`，未发布，未刷机 | 原理图、芯片容量、实机、客户稳定版都没有 |
 | 2026-10-15 | 保存章程并填写本状态 | 分支 `docs/scout-lite-charter`。章程文件与上传原文一致 | Decision Pending 未改章程原文 |
+| 2026-10-15 | Colin 批准文档 PR 合入条件，并批准通道 A | 批准范围只有这两件。workflow：`.github/workflows/scout-lite-upstream-tag.yml`。已处理 tag 行是 `scout-lite-upstream-stable-tag: v1.18.0`。未合并，未发布固件，未刷机 | schedule 要等该文件在 `master` 上才运行。原理图未确认 |
 
 ## 8. 最近一次同步摘要
 
 - 上游版本：源码版本字符串 `v1.18.0`。tag `v1.18.0`（`b2b9f92382eb60b39b8741be3b567e416cdbe672`）比 `d3ceb28afeda1196ca27c13adeaa69ada52383f3` 落后 10 commits。
-- 新增功能及受影响模块：无固件改动。本状态对应的变更只动章程、状态、`AGENTS.md` 和矩阵表头对照。
-- 自动测试：PR #1 在 `b242f00` 上 `Firmware Unit Tests` / `Native Unity tests`、`Scout Lite CI` / `Native Unity tests`、`Compile MARAUDER_C5` 为 SUCCESS。本变更不新增 workflow，也不重跑固件构建。
+- 新增功能及受影响模块：无固件改动。另加一个每日 tag workflow。该 workflow 不编译固件。
+- 自动测试：PR #1 在 `b242f00` 上 `Firmware Unit Tests` / `Native Unity tests`、`Scout Lite CI` / `Native Unity tests`、`Compile MARAUDER_C5` 为 SUCCESS。通道 A 不在 pull request 上跑。GitHub 的 schedule 只从默认分支 `master` 触发。
 - 实机验证：无。未刷机。
-- 是否允许稳定版发布：否。没有客户稳定固件。合并稳定分支需要 Colin 明确批准。
+- 是否允许稳定版发布：否。没有客户稳定固件。Colin 批准的是这份文档 PR 在 required CI 为绿后可合入 `master`，不是固件发布。Agent 不合并，不刷机。

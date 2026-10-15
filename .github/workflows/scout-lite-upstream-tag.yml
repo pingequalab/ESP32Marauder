@@ -1,0 +1,95 @@
+# Channel A. This is the only upstream-tag schedule.
+# GitHub runs schedule from the default branch, so this starts after the file is on master.
+# Latest stable tag: the newest GitHub Release that is not a draft and not a prerelease.
+# Unchanged: exit 0. No issue and no AI.
+# Changed: open one issue, then stop. No firmware build, firmware PR, merge, release, or flash.
+
+name: Scout Lite upstream tag
+
+on:
+  schedule:
+    - cron: "17 4 * * *"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: scout-lite-upstream-tag
+  cancel-in-progress: false
+
+jobs:
+  check-stable-tag:
+    name: Compare upstream stable tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Compare recorded tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          status_file="docs/scout-lite/PROJECT_STATUS.md"
+          key="scout-lite-upstream-stable-tag:"
+          mapfile -t recorded_lines < <(grep -E "^${key} v[0-9]+[.][0-9]+[.][0-9]+$" "$status_file" || true)
+          if [ "${#recorded_lines[@]}" -ne 1 ]; then
+            echo "expected exactly one ${key} line in ${status_file}" >&2
+            exit 1
+          fi
+          recorded="${recorded_lines[0]##* }"
+          if ! [[ "$recorded" =~ ^v[0-9]+[.][0-9]+[.][0-9]+$ ]]; then
+            echo "recorded tag is not a stable tag: ${recorded}" >&2
+            exit 1
+          fi
+
+          latest=$(curl -fsSL --retry 3 --retry-all-errors --retry-delay 2 \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "User-Agent: pingequa-scout-lite-tag-check" \
+            https://api.github.com/repos/justcallmekoko/ESP32Marauder/releases/latest \
+            | jq -er '.tag_name | select(test("^v[0-9]+[.][0-9]+[.][0-9]+$"))')
+
+          if [ "$latest" = "$recorded" ]; then
+            exit 0
+          fi
+
+          marker="scout-lite-upstream-tag:${latest}"
+          page=1
+          while true; do
+            batch=$(gh api "repos/${REPO}/issues?state=all&per_page=100&page=${page}")
+            count=$(jq 'length' <<<"$batch")
+            if [ "$count" -eq 0 ]; then
+              break
+            fi
+            hit=$(jq --arg m "$marker" '[.[] | select(.pull_request | not) | select(((.body // "") | gsub("\r"; "")) | split("\n") | index($m))] | length' <<<"$batch")
+            if [ "$hit" -gt 0 ]; then
+              exit 0
+            fi
+            if [ "$count" -lt 100 ]; then
+              break
+            fi
+            page=$((page + 1))
+            if [ "$page" -gt 20 ]; then
+              echo "stopped paging issues before proving ${marker} is new" >&2
+              exit 1
+            fi
+          done
+
+          body_file=$(mktemp)
+          {
+            printf '%s\n' "$marker"
+            printf '\n'
+            printf '已处理 tag：`%s`\n' "$recorded"
+            printf '上游最新正式 release tag：`%s`\n' "$latest"
+            printf 'https://github.com/justcallmekoko/ESP32Marauder/releases/tag/%s\n' "$latest"
+            printf '\n'
+            printf '%s\n' "同一 tag 只开这一条。不打开固件 PR，不合并，不编译固件，不发布，不刷机。"
+            printf '%s\n' "人处理完后，把 ${key} 那一行改成这个 tag。"
+          } > "$body_file"
+          gh issue create --repo "$REPO" --title "上游稳定 tag 变为 ${latest}" --body-file "$body_file"

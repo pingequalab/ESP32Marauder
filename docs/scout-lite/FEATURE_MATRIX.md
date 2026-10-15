@@ -2,6 +2,14 @@
 
 基线 commit：`d3ceb28afeda1196ca27c13adeaa69ada52383f3`。
 
+章程枚举对照（只加在表头，不改下面每一行的中文状态）：
+
+- 已验证 → 仅构建或自动化测试（E2）
+- 源码支持 → `SOURCE_PRESENT_UNTESTED`（E1）
+- 未知 → `UNKNOWN`
+
+`需适配` 和 `硬件受限` 仍是本表的中文标签。本表不新增 `CONFIRMED_WORKING`、`INTEGRATION_BLOCKED`、`NOT_APPLICABLE`。
+
 Scout Lite 还没有板型宏。官方默认对照目标是 `MARAUDER_C5`。「Scout Lite 现状」不是实机已经启用。
 
 状态只允许这五个词：

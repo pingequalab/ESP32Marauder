@@ -1,0 +1,205 @@
+name: Scout Lite CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scout-lite-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-unit-tests:
+    name: Native Unity tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PLATFORMIO_SETTING_ENABLE_TELEMETRY: "No"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Install PlatformIO
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install --disable-pip-version-check platformio==6.1.19 gcovr==7.2
+
+      - name: Run firmware unit tests
+        run: .venv/bin/platformio test -e native
+
+      - name: Generate coverage report
+        run: .venv/bin/gcovr --root . --filter esp32_marauder --exclude test --cobertura coverage.xml
+
+      - name: Include all firmware sources in coverage
+        run: python3 tools/whole_source_coverage.py coverage.xml
+
+      - name: Test coverage source discovery
+        run: python3 -m unittest discover -s tools -p 'test_*.py'
+
+  marauder-c5:
+    name: Compile MARAUDER_C5
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Arduino CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          echo "/home/runner/work/ESP32Marauder/ESP32Marauder/bin" >> $GITHUB_PATH
+          export PATH=$PATH:/home/runner/work/ESP32Marauder/ESP32Marauder/bin
+          arduino-cli version
+
+      - name: Verify Installed Cores
+        run: arduino-cli core list
+
+      - name: Build TestFile with ESP32 v3.3.4
+        uses: ArminJo/arduino-test-compile@v3.2.1
+        with:
+          sketch-names: TestFile.ino
+          arduino-board-fqbn: esp32:esp32:esp32s2
+          arduino-platform: esp32:esp32@3.3.4
+          platform-url: https://github.com/espressif/arduino-esp32/releases/download/3.3.4/package_esp32_dev_index.json
+
+      - name: Verify Installed Cores Again
+        run: arduino-cli core list
+
+      - name: Show Arduino dir structure
+        run: |
+          find /home/runner/.arduino15/packages/esp32/hardware/
+
+      - name: Install ESP32Ping
+        uses: actions/checkout@v2
+        with:
+          repository: marian-craciunescu/ESP32Ping
+          ref: 1.6
+          path: CustomESP32Ping
+
+      - name: Install AsyncTCP
+        uses: actions/checkout@v2
+        with:
+          repository: ESP32Async/AsyncTCP
+          ref: v3.4.8
+          path: CustomAsyncTCP
+
+      - name: Install MicroNMEA
+        uses: actions/checkout@v2
+        with:
+          repository: stevemarple/MicroNMEA
+          ref: v2.0.6
+          path: CustomMicroNMEA
+
+      - name: Install ESPAsyncWebServer
+        uses: actions/checkout@v2
+        with:
+          repository: ESP32Async/ESPAsyncWebServer
+          ref: v3.8.1
+          path: CustomESPAsyncWebServer
+
+      - name: Install TFT_eSPI
+        uses: actions/checkout@v2
+        with:
+          repository: Bodmer/TFT_eSPI
+          ref: V2.5.34
+          path: CustomTFT_eSPI
+
+      - name: Install XPT2046_Touchscreen
+        uses: actions/checkout@v2
+        with:
+          repository: PaulStoffregen/XPT2046_Touchscreen
+          ref: v1.4
+          path: CustomXPT2046_Touchscreen
+
+      - name: Install lv_arduino
+        uses: actions/checkout@v2
+        with:
+          repository: lvgl/lv_arduino
+          ref: 3.0.0
+          path: Customlv_arduino
+
+      - name: Install JPEGDecoder
+        uses: actions/checkout@v2
+        with:
+          repository: Bodmer/JPEGDecoder
+          ref: 1.8.0
+          path: CustomJPEGDecoder
+
+      - name: Install NimBLE-Arduino
+        uses: actions/checkout@v2
+        with:
+          repository: h2zero/NimBLE-Arduino
+          ref: 2.3.8
+          path: CustomNimBLE-Arduino
+
+      - name: Install Adafruit_NeoPixel
+        uses: actions/checkout@v2
+        with:
+          repository: adafruit/Adafruit_NeoPixel
+          ref: 1.12.0
+          path: CustomAdafruit_NeoPixel
+
+      - name: Install ArduinoJson
+        uses: actions/checkout@v2
+        with:
+          repository: bblanchon/ArduinoJson
+          ref: v6.18.2
+          path: CustomArduinoJson
+
+      - name: Install LinkedList
+        uses: actions/checkout@v2
+        with:
+          repository: ivanseidel/LinkedList
+          ref: v1.3.3
+          path: CustomLinkedList
+
+      - name: Install EspSoftwareSerial
+        uses: actions/checkout@v2
+        with:
+          repository: plerup/espsoftwareserial
+          ref: 8.1.0
+          path: CustomEspSoftwareSerial
+
+      - name: Install Adafruit_BusIO
+        uses: actions/checkout@v2
+        with:
+          repository: adafruit/Adafruit_BusIO
+          ref: 1.15.0
+          path: CustomAdafruit_BusIO
+
+      - name: Install Adafruit_MAX1704X
+        uses: actions/checkout@v2
+        with:
+          repository: adafruit/Adafruit_MAX1704X
+          ref: 1.0.2
+          path: CustomAdafruit_MAX1704X
+
+      - name: Install Adafruit_TCA8418
+        run: cp -r libraries/Adafruit_TCA8418 CustomAdafruit_TCA8418
+
+      - name: Configure TFT_eSPI
+        run: |
+          rm -f CustomTFT_eSPI/User_Setup_Select.h
+          cp User*.h CustomTFT_eSPI/
+
+      - name: Modify platform.txt
+        run: |
+          for i in $(find /home/runner/.arduino15/packages/esp32/hardware/esp32/ -name "platform.txt"); do
+            sed -i 's/compiler.c.elf.extra_flags=/compiler.c.elf.extra_flags=-Wl,-zmuldefs /' "$i"
+          done
+          for f in $(find /home/runner/.arduino15/packages/esp32/tools/esp32-arduino-libs/ -name "cpp_flags"); do
+            sed -i 's/-fexceptions/-fno-exceptions/g' "$f"
+          done
+
+      - name: Build Marauder for ESP32-C5-DevKitC-1
+        uses: ArminJo/arduino-test-compile@v3.3.0
+        with:
+          sketch-names: esp32_marauder.ino
+          arduino-board-fqbn: "esp32:esp32:esp32c5:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=enabled"
+          extra-arduino-cli-args: "--warnings none --build-property compiler.cpp.extra_flags='-DMARAUDER_C5'"
+          arduino-platform: esp32:esp32@3.3.4
+          platform-url: https://github.com/espressif/arduino-esp32/releases/download/3.3.4/package_esp32_dev_index.json

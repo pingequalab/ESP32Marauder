@@ -25,8 +25,10 @@
 
 `MARAUDER_VERSION` 在同步点和该 tag 上都是字符串 `v1.18.0`（同步点 `esp32_marauder/configs.h:60`，tag 上为 `configs.h:52`）。字符串不是 tag 指针。
 
-## 待移植
+## 下一份 PR
 
-空。尚未开始。
+1. 本分支 `scout-lite/baseline-audit`：文档和 `scout-lite-ci.yml`。这是审计报告，不是固件变更。
+2. 之后的代码 PR：只有 `FEATURE_MATRIX.md` 出现「需适配」才开。当前没有这一行。引脚、Flash/PSRAM 容量、刷 DevKit bin、SigRoam 都是「未知」，不能当成移植任务。
+3. 给 justcallmekoko/ESP32Marauder 的 PR：现在没有依据。本地没有固件补丁，也没有已证实、适合上游的通用修复。不要编一个上游 PR 编号。
 
-没有 Scout Lite 板型宏，没有待提交的固件补丁，也没有已编号的移植任务。功能缺口在 `FEATURE_MATRIX.md`，硬件未核实项在 `HARDWARE.md`。
+待移植列表：空。尚未开始。

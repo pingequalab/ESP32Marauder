@@ -21,16 +21,20 @@
 
 `platformio.ini` 只有 `[env:native]`，用来跑 `test/` 里的主机测试。它不产生 C5 固件。
 
-## 以后的薄板型层
+## 边界
 
-Scout Lite 若要有自己的目标，应是 `configs.h` 里一个新的板型宏，加上 workflow 里的一条 FQBN。GPS、SD、UART 若与 `MARAUDER_C5` 不同，只放这个宏下面。
+三层分开。现在没有第四层，也没有 BSP 目录。
 
-不要复制 Mini v3、v8 或别的机型的大段实现。不要加框架。CLI 命令名保持 Marauder 原样。SigRoam 仍走现有 UART CLI。
+板型配置只放选择宏和引脚。`esp32_marauder/configs.h` 的 `MARAUDER_C5` 段（约 529–547 行，以及 GPS/SD 宏）和 `esp32_marauder/esp32_marauder.ino` 里 `HAS_C5_SD` 的 SPI 初始化就是这一层。官方编译入口是 `.github/workflows/build_parallel.yml` 的 FQBN 和 `-DMARAUDER_C5`。以后若要 Scout Lite 目标，也只加同类宏和一条 FQBN。引脚还是未知，所以这一层还没写。
 
-这一步还没开始。仓库里没有 `SCOUT` 宏。
+核心是与板名无关的行为：`WiFiScan.cpp`、`CommandLine.cpp`、`GpsInterface.cpp`、`SDInterface.cpp`、`settings.cpp`、`Buffer.cpp`、`MemoryGuard.cpp`。不把 Scout Lite 品牌或协议写进这些文件。
+
+产品附加物是本 fork 的说明和检查，不是固件：`AGENTS.md`、`docs/scout-lite/`、`.github/workflows/scout-lite-ci.yml`。`scout-lite-ci.yml` 只复用现有 native 测试和一次 C5 编译，不增加轮询任务。
+
+CLI 命令名留在 `CommandLine.h`。SigRoam 若要兼容，走这些名字，不另做一套栈。仓库里没有 FAP。
 
 ## 相对上游的实际差异
 
 同步点 `d3ceb28afeda1196ca27c13adeaa69ada52383f3` 等于 `justcallmekoko/ESP32Marauder` 的 `master`。
 
-在该点之上，这个分支只加文档和 `scout-lite-ci.yml`。`esp32_marauder/` 与其他固件源码的 diff 是空的。没有本地固件补丁。
+在该点之上，这个分支只有文档和 `scout-lite-ci.yml`。`esp32_marauder/` 与其他固件源码的 diff 是空的。没有本地固件补丁，没有假的 BSP。

@@ -6,7 +6,7 @@
 
 没有客户稳定固件。本文件不把编译通过写成实机可用。
 
-2026-10-16：SigRoam 优化、FAP 合约测试、SigRoam 兼容超出范围。历史句子保留。产品目标改为 Scout Lite 硬件能跑的最全官方 Marauder 功能，只做最小移植。Fork 仍是官方 `MARAUDER_C5`。差异表是 `FEATURE_MATRIX.md`。以后的代码顺序是 `MINIMAL_CHANGE_PLAN.md`。本轮不实现那些项。
+2026-10-16：一块 `MARAUDER_C5` 固件同时服务标准 Flipper Marauder 应用和 SigRoam。标准 CLI 不改。SigRoam 是可选命名空间，还没写进固件。当天早些时候「SigRoam 超出范围」的句子留在章程里，以较晚的双应用节为准。差异表是 `FEATURE_MATRIX.md`。应用命令矩阵是 `FLIPPER_MARAUDER_COMPATIBILITY_MATRIX.md`。以后的代码顺序是 `MINIMAL_CHANGE_PLAN.md` 第 0 节。本轮只写文档。
 
 通道 A 只读下面这一行，当作已经处理过的上游稳定 tag。稳定 tag 指 `justcallmekoko/ESP32Marauder` 最新的非 draft、非 prerelease Release。人把这一行改成新 tag 之后，下一次检查才把它当成已处理。
 
@@ -22,7 +22,8 @@ scout-lite-upstream-stable-tag: v1.18.0
 - `docs/scout-lite/TEST_PLAN.md`
 - `docs/scout-lite/requirements-v1.0.md`
 - `docs/scout-lite/deep-research-report-2.md`
-- `docs/scout-lite/PROJECT_CHARTER.md`（含 2026-10-16 范围更正，原文未整章重写）
+- `docs/scout-lite/PROJECT_CHARTER.md`（含 2026-10-16 双应用节和更早的范围更正，原文未整章重写）
+- `docs/scout-lite/FLIPPER_MARAUDER_COMPATIBILITY_MATRIX.md`
 - `docs/scout-lite/MINIMAL_CHANGE_PLAN.md`
 - `docs/scout-lite/CODE_GAP.md`
 - `docs/scout-lite/INTERNAL_BETA.md`
@@ -50,7 +51,7 @@ GPS 接到 Flipper pin 15 和 16，不是官方 GPIO13/14。已记录。2026-10-
 | --- | --- | --- | --- | --- |
 | 源码与功能审计 | [PR #1](https://github.com/pingequalab/ESP32Marauder/pull/1)，head `b242f00`，merge `dc263eb` | 文档基线与功能矩阵 | MERGED | 不重复审计 |
 | 章程与状态入库 | [PR #2](https://github.com/pingequalab/ESP32Marauder/pull/2)，合并 `f4bc767` | 保存章程、合并 `AGENTS.md`、填写本状态、加入通道 A | 已合并到 `master`。当时状态文件仍写「未合并」，以这个合并提交为准 | 不重开。2026-10-16 的范围更正是另一份文档 PR |
-| 功能差距与范围更正 | 分支 `scout-lite/feature-gap` | 标出 SigRoam 超出范围，写差异表和最小改动计划，重编未修改的 `MARAUDER_C5` | 进行中。不实现功能移植 | 不合并，不发版，不刷机 |
+| 功能差距与双应用文档 | 分支 `scout-lite/feature-gap` | 标准 CLI 不改。SigRoam 记为同一固件上的可选命名空间。写架构、命令矩阵和最小顺序 | 进行中。本轮不改固件 | 不合并，不发版，不刷机 |
 
 ## 3. P0 功能证据矩阵
 
@@ -63,8 +64,8 @@ GPS 接到 Flipper pin 15 和 16，不是官方 GPIO13/14。已记录。2026-10-
 | microSD/日志 | `SD_MISO 2`，`SD_SCK 6`，`SD_MOSI 7`，`SD_CS 10` | 原理图与 `MARAUDER_C5` 相同。功能仍是 `SOURCE_PRESENT_UNTESTED`。不是 `CONFIRMED_WORKING` | 原理图确认；源码 E1；实机未到 E3 | 实机未测 | 不为这四根线改宏 |
 | Wardriving/双频 | `MARAUDER_C5` 上 wardrive 与双频源码在 | `SOURCE_PRESENT_UNTESTED` | E1 | 实机未测 | 板级证据之前不改固件 |
 | WiGLE 上传 | `MARAUDER_C5` 上 WiGLE/WDG 源码在 | `SOURCE_PRESENT_UNTESTED` | E1 | 实网上传未测 | 不假设上传可用 |
-| Marauder CLI | `MARAUDER_C5` 上 CLI 源码在 | `SOURCE_PRESENT_UNTESTED` | E1 | 实机未测 | 保持官方 CLI。不为 SigRoam 改命令 |
-| SigRoam FAP | 本仓库没有 SigRoam FAP。这条证据保留 | 超出范围 | 无本仓库源码 | 2026-10-15 曾标 UNKNOWN | 不做优化、合约测试或兼容工作 |
+| Marauder CLI | `MARAUDER_C5` 上 CLI 源码在 | `SOURCE_PRESENT_UNTESTED` | E1 | 实机未测 | 保持标准命令和回复。SigRoam 只用单独命名空间 |
+| SigRoam FAP | 本仓库没有 FAP 源码。应用在 `pingequalab/sigroam-wardriving` tag `v0.6.1`（`69ecfd7`） | 同一固件上的可选命名空间，固件入口未写 | 应用源码已读；固件未实现 | 不改标准命令 | 按 `MINIMAL_CHANGE_PLAN.md` 第 0 节。不刷机 |
 
 ## 4. 活跃 PR、待上游贡献补丁与冲突
 
@@ -77,10 +78,10 @@ GPS 接到 Flipper pin 15 和 16，不是官方 GPIO13/14。已记录。2026-10-
 
 ## 5. 当前三个最高价值任务
 
-2026-10-15 的任务 2 是「有 FAP 清单再做 SigRoam 合约测试」。2026-10-16 起该项超出范围。本仓库没有 FAP 的证据仍留在第 3 节。
+2026-10-15 的任务 2 是「有 FAP 清单再做 SigRoam 合约测试」。2026-10-16 改为：SigRoam 是同一固件上的可选命名空间，不另做合约测试框架，也不改标准命令。本仓库仍然没有 FAP 源码。
 
 1. 不为已对齐的 SD/GPS 宏改固件。实机仍不是 `CONFIRMED_WORKING`。依赖：实机日志。不适合上游 PR。不打开功能移植 PR。
-2. Phase 1 已进 CLI `upload`：sidecar 跳过、仅当上传前正在 wardrive 且没有失败文件时回到 wardrive、单文件再试 2 次。无 fix 不占 MAC 也已做。无屏 `upload` 会从 SD 根填 `wardrive_` / `wigle-` 日志，空指针不解引用。触发 SSID 已删：没有 `t_ssid` / `t_pass`，也没有新的串口句子。回复仍是原来的 `Upload OK`、`WiGLE failed`、`Upload complete`、`StartingWardrive. Stop with stopscan` 和已有 `[UPLOAD]` 行。命令停在 Flipper 应用 `flipperzero-wifi-marauder` 已经发送的内容，以及 `[BUF/BEGIN]`、`[BUF/CLOSE]`。Phase 2 不做：SSID 排除、无屏删日志。不做扫描器重写、Node/Core、ESP-NOW、SigRoam、屏幕 UI、PSRAM、Dock 触发。依赖：`MINIMAL_CHANGE_PLAN.md` 第 1b 节。不适合整段上游 PR。
+2. Phase 1 已进 CLI `upload`：sidecar 跳过、仅当上传前正在 wardrive 且没有失败文件时回到 wardrive、单文件再试 2 次。无 fix 不占 MAC 也已做。无屏 `upload` 会从 SD 根填 `wardrive_` / `wigle-` 日志，空指针不解引用。触发 SSID 已删：没有 `t_ssid` / `t_pass`，也没有新的串口句子。回复仍是原来的 `Upload OK`、`WiGLE failed`、`Upload complete`、`StartingWardrive. Stop with stopscan` 和已有 `[UPLOAD]` 行。标准命令停在 Flipper 应用 `flipperzero-wifi-marauder` 已经发送的内容，以及 `[BUF/BEGIN]`、`[BUF/CLOSE]`。SigRoam 命名空间还没写。Phase 2 不做：SSID 排除、无屏删日志。不做扫描器重写、Node/Core、ESP-NOW、屏幕 UI、PSRAM、Dock 触发。依赖：`MINIMAL_CHANGE_PLAN.md` 第 0 节和第 1b 节。不适合整段上游 PR。
 3. `HAS_PSRAM` 保持注释，直到有运行时容量。需要屏、按键或 Flipper 下载控制的代码不移植。Phase 1 的 C5 构建记录见 `INTERNAL_BETA.md`。不提交 bin，不上传 Release，不刷机。
 
 ## 6. Decision Pending
@@ -92,7 +93,7 @@ GPS 接到 Flipper pin 15 和 16，不是官方 GPIO13/14。已记录。2026-10-
 - 章程第 5 节仍用 `CONFIRMED_WORKING` 那套枚举。2026-10-16 的 `FEATURE_MATRIX.md` 改成动作列：`已在 C5` / `可最小打开` / `硬件不具备` / `超出范围` / `未知`。旧矩阵的构建证据留在该文件末尾。不为此重写章程枚举。
 - 「可以直接刷 DevKit 固件」保持 UNKNOWN。SD/GPS 同线不是刷机许可。
 - PSRAM 容量仍是 UNKNOWN。`HAS_PSRAM` 保持注释，丝印 N8R8 不是已测到的启用。
-- 章程正文里的 SigRoam 目标句保留。2026-10-16 更正节声明它们超出范围，不以改写全文来删历史。
+- 章程正文里的 SigRoam 目标句保留。2026-10-16 早些时候的更正节曾写超出范围。同日较晚的双应用节盖过那一句，不以改写全文来删历史。
 
 ## 7. 最近已完成工作与证据
 
@@ -111,6 +112,7 @@ GPS 接到 Flipper pin 15 和 16，不是官方 GPIO13/14。已记录。2026-10-
 | 2026-10-16 | 无 fix 不占 MAC | 编译 commit `b376eb64e20ec51fe3587205f01cc504a898f489`。退出码 0。app bin SHA256 `9005e18a9d563b9cd62c415e0b8f5837d7bab8beb5300e76ce5dab0d746fa4f2`。三条写入路径都是 `append` 之后才 `save_mac()` | bin 未提交。未刷机。不合并。SSID 排除、删除 CLI、PSRAM 没做 |
 | 2026-10-16 | 无屏日志列表和单 SSID 触发上传 | 编译 commit `1e6a5572a6295695f30b6026d4a5f45255c821dc`。退出码 0。app bin SHA256 `f17d12826d2f2e676e9fc356199bf7b5b56ebaa4fe1328b5401f813f705ab041`。设置键 `t_ssid` / `t_pass`。回复仍是原有串口句子 | 下一行已删掉触发 SSID。bin 未提交。未刷机。不合并 |
 | 2026-10-16 | 删掉触发 SSID，只留 Flipper 已有 `upload` | 编译 commit `5b75787bcc96ff8e2bb1f1e49b11fc8707291b12`。退出码 0。app bin SHA256 `45e6c5976a8b034344cac5eb867e5853f1808d8899934bf29d6ca608325241c9`。命令在 `INTERNAL_BETA.md`。无屏仍收集 `wardrive_` / `wigle-`。回复仍是原有串口句子 | bin 未提交。未刷机。不合并 |
+| 2026-10-16 | 双应用架构只写文档 | `ARCHITECTURE.md`、`FLIPPER_MARAUDER_COMPATIBILITY_MATRIX.md`、章程双应用节。未改固件 | 命名空间未实现。实机未测。不合并。不刷机 |
 
 ## 8. 最近一次同步摘要
 

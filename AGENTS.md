@@ -4,7 +4,7 @@
 
 ## 先读
 
-1. 先读 `docs/scout-lite/PROJECT_CHARTER.md`，包括 2026-10-16 范围更正。那里是项目意图和约束。
+1. 先读 `docs/scout-lite/PROJECT_CHARTER.md`，包括 2026-10-16 双应用兼容和当天更早的范围更正。那里是项目意图和约束。架构边界在 `docs/scout-lite/ARCHITECTURE.md`。
 2. 动手前读 `docs/scout-lite/PROJECT_STATUS.md`、`docs/scout-lite/FEATURE_MATRIX.md`、`docs/scout-lite/MINIMAL_CHANGE_PLAN.md`。接着已有审计和 PR，不重复启动同一项审计。
 3. Scout Lite 原理图和可复现的实机日志，优先于研究报告和假设。
 4. 依赖某项上游功能之前，写明源码路径、相关符号、版本或 tag 或 commit、构建开关、验证状态。
@@ -16,7 +16,7 @@
 
 Fork 停在官方 `MARAUDER_C5`。不要新建 Scout Lite 板型宏来搬别的板的功能。
 
-SigRoam 优化、FAP 合约测试、SigRoam 兼容超出范围。历史文档保留，只标超出范围，不删证据。
+一块固件同时给标准 Flipper Marauder 应用和 SigRoam 用，切换应用不重新刷机。SigRoam 是同一固件上的可选命名空间，只覆盖 wardriving 差异功能。历史文档里「SigRoam 超出范围」的句子保留，以章程里较晚的双应用节为准。
 
 已确认、不要重开的硬件：
 
@@ -31,7 +31,7 @@ SigRoam 优化、FAP 合约测试、SigRoam 兼容超出范围。历史文档保
 
 1. 优先用上游已有实现。缺功能先核对 `FEATURE_MATRIX.md`。改动以官方 `MARAUDER_C5` 为底。需要屏、按键或 Flipper 下载控制的功能不移植。
 2. 不重写 Marauder 核心。补丁小，能单独回退，并且能单独测。没有具体必要和回归计划，不重构上游的扫描、Wi-Fi、SD、GPS、CLI、分区或启动逻辑。
-3. Scout Lite 面向 Flipper Zero；命令和串口原文必须停在 `flipperzero-wifi-marauder` 已经发送的内容以及 `[BUF/BEGIN]`、`[BUF/CLOSE]` 这两个标记之内。不为 SigRoam 改命令或做合约测试。改公开命令必须有官方 CLI 的兼容测试，并且先有矩阵依据。
+3. Scout Lite 面向 Flipper Zero。一块固件同时服务标准 Marauder 应用和 SigRoam。标准命令和串口原文必须停在 `flipperzero-wifi-marauder` 已经发送的内容以及 `[BUF/BEGIN]`、`[BUF/CLOSE]` 这两个标记之内，不改这些命令的含义和交互。SigRoam 自定义命令使用单独命名空间，只做 GPS 状态、双频统计、记录质量、会话、上传状态和错误恢复，并复用现有 Wi-Fi、GPS、SD 和 wardrive 引擎。改公开命令必须有官方 CLI 的兼容测试，并且先有矩阵依据。
 4. 研究报告里的推断保持「待验证」，不是事实。
 5. `HARDWARE.md` 里已经写明的原理图确认项不要重开。其余硬件假设一律未核实。引脚宏不等于接线已确认。硬件宏不是板级事实。
 6. 合适的通用修复提交上游。维护本地补丁记录；上游吸收等价修复后删掉本地重复补丁。未核实的上游变更不自动合并。遵守上游贡献规范和第三方许可。

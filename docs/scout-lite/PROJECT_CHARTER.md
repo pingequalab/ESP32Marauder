@@ -7,6 +7,22 @@
 > 状态：**规划基线（尚待 Cursor 正在进行的源码与功能审计确认）**  
 > 适用范围：Scout Lite 硬件上的官方 ESP32 Marauder 派生固件，以及必要的 SigRoam FAP 兼容与发布联动。
 
+## 2026-10-16 双应用兼容
+
+Colin，2026-10-16。本节是兼容要求，盖过下一节里「不做 SigRoam 软件工作」那一句。下一节其余句子和后文原样保留。
+
+一块 Scout Lite 固件同时服务标准 Flipper Marauder 应用和 SigRoam 应用。换应用不重新刷机。
+
+标准 Marauder CLI 是兼容接口。不改它的命令、回复和交互。
+
+SigRoam 只做差异化的 Wardriving：GPS 状态、双频统计、记录质量、会话管理、上传状态、错误恢复。不把 Marauder 应用菜单抄进 SigRoam。
+
+SigRoam 的自定义命令使用单独命名空间，不改变任何标准命令的含义。
+
+Wi-Fi、GPS、SD 和 wardrive 引擎继续用 Marauder 已有实现。不建第二套引擎。
+
+细节在 `docs/scout-lite/ARCHITECTURE.md` 和 `docs/scout-lite/FLIPPER_MARAUDER_COMPATIBILITY_MATRIX.md`。
+
 ## 2026-10-16 范围更正
 
 Colin，2026-10-16。本节盖过下文里把 SigRoam 当成目标的句子。那些句子留在原文里，当作历史，不整章重写。

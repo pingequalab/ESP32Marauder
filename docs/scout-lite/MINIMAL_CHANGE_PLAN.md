@@ -4,7 +4,7 @@
 
 本轮不改固件，不实现下面任何一项，不刷机，不发版。
 
-结论：板级宏表里仍然没有「硬件已经证实、改一行宏就能打开」的项。函数级对照在 `CODE_GAP.md`。下面第 1b 节只列已经在源码里对上的缺口。本轮不改这些函数。SigRoam 仍超出范围。不把研究报告里的「可以直接刷」或未核对 GPIO 写进章程。
+结论：板级宏表里仍然没有「硬件已经证实、改一行宏就能打开」的项。函数级对照在 `CODE_GAP.md`。下面第 1b 节是已经落地的上传行为，本轮不再改这些函数。双应用顺序在第 0 节。不把研究报告里的「可以直接刷」或未核对 GPIO 写进章程。
 
 ## 1. 继续使用官方 `MARAUDER_C5`
 
@@ -31,7 +31,7 @@ Phase 2，现在不做：SSID 排除表；无屏删除日志的 CLI。
 
 留下的只有该应用已经会发的 `upload -d wigle|wdg|both`：无屏从 SD 根收集 `wardrive_` / `wigle-`，sidecar 跳过，单文件失败再试 2 次。全部成功且上传前是 `WIFI_SCAN_WAR_DRIVE` 时走已有 `startScanFromCLI`，原文仍是 `StartingWardrive. Stop with stopscan`。回复保持 `Upload OK`、`WiGLE failed`、`Upload complete` 和已有 `[UPLOAD]` 行。`[BUF/BEGIN]` / `[BUF/CLOSE]` 不改。`wardrive`、`stopscan`、`gpsdata`、`ls`、`settings` 的含义不改。
 
-不做：重写扫描器、Node/Core、ESP-NOW、SigRoam、屏幕 UI、新命令、新的回复句子、Dock 触发。
+不做：重写扫描器、Node/Core、ESP-NOW、屏幕 UI、改标准命令或标准回复、Dock 触发。SigRoam 不在这份「不做」里；它的顺序见第 0 节，并且不进入标准命令。
 
 ## 2. `HAS_PSRAM`：现在不打开
 
@@ -84,11 +84,24 @@ Phase 2，现在不做：SSID 排除表；无屏删除日志的 CLI。
 - 不要复制：T-Dongle 的 16MB 表，也不要为 Scout Lite 新写分区 CSV。
 - 怎么测：不改分区。内部 beta 只用上面的官方 DevKit FQBN。
 
+## 0. 双应用，按这个顺序
+
+本轮只写文档。不刷机，不合并，不在这一笔里改固件。
+
+1. 冻结标准 CLI。不改 `flipperzero-wifi-marauder` 已经发送的命令、回复和 `[BUF/BEGIN]` / `[BUF/CLOSE]`。目录固定的是 `v0.7.6`；默认分支 `v0.7.12` 还没有 Release。矩阵见 `FLIPPER_MARAUDER_COMPATIBILITY_MATRIX.md`。
+2. 保持一块 `MARAUDER_C5` 固件。不为 SigRoam 另做分区、板型宏或第二套 `executeWarDrive()`。
+3. 给 SigRoam 加一个标准菜单从未发送的命令前缀。只覆盖 GPS 状态、双频计数、记录质量、会话、上传状态、错误恢复。调用现有 `WiFiScan`、`GpsInterface`、`SDInterface`、`Buffer`。前缀的回复只在该前缀下出现。
+4. 不把 SigRoam 的裸 `upload` / `uploadstatus` 并进 `upload -d`。`upload -d wigle|wdg|both` 保持现在的无屏收集和 sidecar 行为。
+5. 不改 `info`。SigRoam 应用自己对普通 Marauder 版本补 `stopscan`。不改 `wardrive`、`stopscan`、`gpsdata`、`wardrivepoi`。
+6. 目录版 `v0.7.6` 和当前固件对不齐、但本顺序不动的项：没有活动入口的 `scanap`、`scansta`、`sigmon`、`btwardrive`；`blespam -t apple` 对不上固件的 `sourapple`；`wardrive -s` 被注释后仍只启动现有 wardrive。不恢复，不新造，不加别名。它们不是双应用的 wardriving 路径。
+7. 实机仍是未测。命名空间落地后的验收是串口对照矩阵，不是刷机。刷机要另一次批准。
+
 ## 9. 明确超出范围，没有代码项
 
-- SigRoam 优化、FAP 合约测试、SigRoam 兼容。不添加测试桩，不改 CLI 去迁就 FAP。
+- 把 Marauder 菜单抄进 SigRoam，或为攻击、门户、嗅探再建一套命令。
 - WebUI。`CommandLine.h:14` 仍是注释。不从树外找网页源码。
 - USB 自动切换。不调查，不改 USB 相关脚。
+- Node/Core、ESP-NOW、扫描器重写、Dock 触发、PSRAM 在没有运行时容量之前打开。
 
 ## 本轮验证
 

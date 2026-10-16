@@ -712,10 +712,10 @@ extern "C" {
                   String wardrive_line = (String)advertisedDevice->getAddress().toString().c_str() + ",,[BLE]," + gps_obj.getDatetime() + ",0," + (String)advertisedDevice->getRSSI() + "," + gps_obj.getLat() + "," + gps_obj.getLon() + "," + gps_obj.getAlt() + "," + gps_obj.getAccuracy() + ",BLE\n";
                   Serial.print(wardrive_line);
 
-                  if (do_save && !wifi_scan_obj.isGeofencePaused())
+                  if (do_save && !wifi_scan_obj.isGeofencePaused()) {
                     buffer_obj.append(wardrive_line);
-
-                  wifi_scan_obj.save_mac(mac_char);
+                    wifi_scan_obj.save_mac(mac_char);
+                  }
 
                   wifi_scan_obj.bt_frames++;
 
@@ -1492,10 +1492,10 @@ extern "C" {
                   String wardrive_line = (String)mac + ",,[BLE]," + gps_obj.getDatetime() + ",0," + (String)rssi + "," + gps_obj.getLat() + "," + gps_obj.getLon() + "," + gps_obj.getAlt() + "," + gps_obj.getAccuracy() + ",BLE\n";
                   Serial.print(wardrive_line);
 
-                  if (do_save && !wifi_scan_obj.isGeofencePaused())
+                  if (do_save && !wifi_scan_obj.isGeofencePaused()) {
                     buffer_obj.append(wardrive_line);
-                    
-                  wifi_scan_obj.save_mac(mac_char);
+                    wifi_scan_obj.save_mac(mac_char);
+                  }
 
                   #ifndef HAS_NIMBLE_2
                     uint8_t* payLoad = advertisedDevice->getPayload();
@@ -6321,8 +6321,6 @@ void WiFiScan::executeWarDrive() {
           if (this->seen_mac(this_bssid_raw))
             continue;
 
-          this->save_mac(this_bssid_raw);
-
           String ssid = WiFi.SSID(i);
           ssid.replace(",", "_");
 
@@ -6342,6 +6340,7 @@ void WiFiScan::executeWarDrive() {
 
           if (do_save) {
             buffer_obj.append(wardrive_line);
+            this->save_mac(this_bssid_raw);
           }
 
           this->beacon_frames++;
@@ -9229,9 +9228,7 @@ void WiFiScan::beaconSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type
         }
 
         if ((do_write) && (!wifi_scan_obj.seen_mac(src_addr))) {
-          wifi_scan_obj.save_mac(src_addr);
           #ifdef HAS_GPS
-            wifi_scan_obj.flock_devices++;
             String wardrive_line =
               macToString(src_addr) + "," +
               "Flock," +
@@ -9248,6 +9245,8 @@ void WiFiScan::beaconSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type
 
             if (gps_obj.getFixStatus() && !wifi_scan_obj.isGeofencePaused()) {
               buffer_obj.append(wardrive_line);
+              wifi_scan_obj.save_mac(src_addr);
+              wifi_scan_obj.flock_devices++;
             }
           #endif
         }

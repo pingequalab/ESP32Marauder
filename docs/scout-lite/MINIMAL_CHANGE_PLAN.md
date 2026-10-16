@@ -23,7 +23,9 @@ Phase 1，本提交：
 - `joinSavedWiFi()` 之前记住 `currentScanMode`。每个文件都成功，且之前是 `WIFI_SCAN_WAR_DRIVE`，才 `startScanFromCLI(WIFI_SCAN_WAR_DRIVE)`。否则 `StartScan(WIFI_SCAN_OFF)`。有文件失败就不恢复。
 - 同一个文件失败后再试 2 次，一共 3 次，然后下一个文件。这不是 `retry` 参数。
 
-Phase 2，现在不做：SSID 排除表；无屏删除日志的 CLI；无 fix 时已 `save_mac()`（`WiFiScan.cpp:6324`，旁路 `9232`），之后有 fix 也不会再记该 MAC。
+无 fix 不占 MAC 已做：只有 `append` 之后才 `save_mac()`。`executeWarDrive()`、`beaconSnifferCallback()`、NimBLE 2 wardrive `onResult()` 三处。频道表没改。
+
+Phase 2，现在不做：SSID 排除表；无屏删除日志的 CLI。
 
 Phase 3，现在不做：有限次的 Dock 触发连接。不搬整段 `runDockMode()`。
 

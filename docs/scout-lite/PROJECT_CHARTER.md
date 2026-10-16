@@ -7,6 +7,16 @@
 > 状态：**规划基线（尚待 Cursor 正在进行的源码与功能审计确认）**  
 > 适用范围：Scout Lite 硬件上的官方 ESP32 Marauder 派生固件，以及必要的 SigRoam FAP 兼容与发布联动。
 
+## 2026-10-16 范围更正
+
+Colin，2026-10-16。本节盖过下文里把 SigRoam 当成目标的句子。那些句子留在原文里，当作历史，不整章重写。
+
+本项目不做 SigRoam 软件工作。SigRoam 优化、FAP 合约测试、SigRoam 兼容都超出范围。不删除已有证据。
+
+Fork 停在官方 `MARAUDER_C5` / ESP32-C5 DevKit。产品目标是：在 Scout Lite 硬件上，跑它能够运行的最全官方 Marauder 功能；只从本树里其他官方目标做最小移植。候选必须已经在这棵树里，由宏或很小的板级文件挡住，并且不需要屏幕、按键或这块板没有的硬件。不发明功能。不因为另一块板有某段代码就整段复制。
+
+以后的代码顺序见 `docs/scout-lite/MINIMAL_CHANGE_PLAN.md`。功能差异见 `docs/scout-lite/FEATURE_MATRIX.md`。
+
 ---
 
 ## 0. 使用方式与文档权威性

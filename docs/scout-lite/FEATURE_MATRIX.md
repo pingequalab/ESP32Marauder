@@ -1,62 +1,67 @@
-# 官方 Marauder 与 Scout Lite 差距
+# 官方 C5 目标与 `MARAUDER_C5` 的差异
 
-基线 commit：`d3ceb28afeda1196ca27c13adeaa69ada52383f3`。
+日期：2026-10-16。源码 commit：`f4bc76727e7f29b7ca64da9c972c9103523c6006`。
 
-章程枚举对照（只加在表头，不改下面每一行的中文状态）：
+只比较本树里这些官方 C5 目标：`MARAUDER_V8`、`MARAUDER_MINI_V3`、`MARAUDER_PANCAKE`、`XIAO_ESP32_C5`、`MARAUDER_T_DONGLE_C5`、`MARAUDER_POOM`。`DUAL_MINI_C5` 只是再定义 `MARAUDER_MINI_V3`（`esp32_marauder/configs.h:144-146`），不单列成一套功能。
 
-- 已验证 → 仅构建或自动化测试（E2）
-- 源码支持 → `SOURCE_PRESENT_UNTESTED`（E1）
-- 未知 → `UNKNOWN`
+一行一个与 `MARAUDER_C5` 不同的官方功能。下面这些宏在列出的六个目标上和 `MARAUDER_C5` 一样，都是打开的，所以没有单独的行：`HAS_BT`（`configs.h:533`）、`HAS_DUAL_BAND`（`542`）、`HAS_NIMBLE_2`（`545`）、`HAS_IDF_3`（`546`）。
 
-`需适配` 和 `硬件受限` 仍是本表的中文标签。本表不新增 `CONFIRMED_WORKING`、`INTEGRATION_BLOCKED`、`NOT_APPLICABLE`。
+动作只有这五个词：`已在 C5`、`可最小打开`、`硬件不具备`、`超出范围`、`未知`。
 
-Scout Lite 还没有板型宏。官方默认对照目标是 `MARAUDER_C5`。「Scout Lite 现状」不是实机已经启用。
+本表没有 `可最小打开` 行。Scout Lite 已确认的接线已经落在 `MARAUDER_C5` 的 SD/GPS 宏上。其余差异要么要这块板没有的硬件，要么还没有实测，要么超出 2026-10-16 的范围。
 
-状态只允许这五个词：
+`MARAUDER_V8` 和 `MARAUDER_MINI_V3` 的宏在 `configs.h` 里。公开 workflow 没有这两个 flag。
 
-- 已验证：只有 `d3ceb28` 上记录过的 native 134/134，以及同一次 C5 编译（app bin SHA256 `1d572f57bb1f90cf063952672414413e194ee7aef00de1c66218238dc26b60a8`）。没有硬件功能用这个词。
-- 源码支持：宏或代码在这棵树里，没有板级测试。
-- 需适配：已经在这棵树里看到的具体源码缺口。不是从别的板型搬代码。
-- 硬件受限：这棵树证明官方 C5 目标做不到。
-- 未知：其余情况。引脚、Flash/PSRAM 容量、能否刷 DevKit 二进制、SigRoam 都是未知。
-
-本表没有「需适配」行，也没有「硬件受限」行。官方 `MARAUDER_C5` 的宏开着的功能，源码在；树没有证明这块目标做不到某项。因此下一份代码 PR 还没有矩阵依据。
-
-| 功能 | 官方目标 | 源码位置 | 编译开关 | 硬件依赖 | Scout Lite 现状 | 状态 | 优先级 | 备注 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| native 单元测试 | `env:native` | `test/`，`platformio.ini` | `platformio test -e native` | 无 | `d3ceb28` 上 134/134，退出码 0 | 已验证 | 高 | 不覆盖射频或整机 |
-| `MARAUDER_C5` 编译 | ESP32-C5-DevKitC-1 | `.github/workflows/build_parallel.yml:46` | `-DMARAUDER_C5` | 无 | 同 commit 上 `arduino-cli compile` 退出码 0 | 已验证 | 高 | SHA256 见上。未刷机。`scout-lite-ci.yml` 未在 GitHub 跑过 |
-| 模组、天线、USB-C | 需求中的设计目标 | 无 Scout Lite 原理图 | 无 | 整板 | 无板型宏 | 未知 | 高 | |
-| Flash 容量 | workflow 写 DevKit `FlashSize=8M` | `build_parallel.yml:46` | FQBN `FlashSize` | Flash | 只有构建字符串 | 未知 | 高 | |
-| PSRAM 容量 | FQBN `PSRAM=enabled` | `build_parallel.yml:46` | 板包 `PSRAM` | PSRAM | 固件宏 `HAS_PSRAM` 在 DevKit 段被注释 | 未知 | 高 | 容量未测。见 `HARDWARE.md` |
-| 分区 / 刷官方 bin | `PartitionScheme=default_8MB` | `build_parallel.yml:46` | FQBN | Flash | 仓库内无 DevKit 分区 CSV，未刷机 | 未知 | 高 | |
-| GPS 引脚 | `GPS_TX 14` / `GPS_RX 13` | `configs.h:2975-2978` | `HAS_GPS` | GNSS、UART | 宏在官方目标里 | 未知 | 高 | 引脚不是已核实接线 |
-| microSD 引脚 | CS 10，MISO 2，MOSI 7，SCK 6 | `configs.h:2706-2707`、`3212-3215` | `HAS_SD`、`HAS_C5_SD` | microSD | 初始化调用在 `esp32_marauder.ino:255-256` | 未知 | 高 | |
-| Flipper UART | `Serial.begin(115200)` | `esp32_marauder.ino:244` | `FLIPPER_ZERO_HAT` 未开 | Flipper | 无 Scout Lite 引脚 | 未知 | 高 | 115200 只是字面量 |
-| SigRoam FAP | 无 FAP 源码 | 无 | 无 | Flipper | 本仓库没有 FAP | 未知 | 高 | 兼容性未测 |
-| 2.4/5 GHz | 定义了 `HAS_DUAL_BAND` 的 C5 目标 | `WiFiScan.h:930`；`WiFiScan.cpp:6244-6260` | `HAS_DUAL_BAND` | 射频 | `MARAUDER_C5` 打开该宏 | 源码支持 | 高 | 实机能否扫到 5 GHz 是未知。无 `scan_dwell` |
-| Wardrive 日志 | 有 `HAS_GPS` 的目标 | `CommandLine.cpp:886-894`；`WiFiScan.cpp:6778`；`Buffer.cpp:19-22` | `HAS_GPS`、`HAS_SD` | GPS、SD | 路径形态是 `/wardrive_<n>.log` | 源码支持 | 高 | |
-| BLE | 各 C5 目标 | `WiFiScan.h:16-17`；`configs.h:533` | `HAS_BT`、`HAS_NIMBLE_2` | 射频 | `MARAUDER_C5` 打开 `HAS_BT` | 源码支持 | 高 | |
-| GPS 状态字符串 | DevKit 以及同样定义 `HAS_GPS` 的 C5 目标 | `GpsInterface.cpp:636-645` | `HAS_GPS` | GNSS | Yes/No 字符串在 | 源码支持 | 高 | 有没有 fix 是未知 |
-| SD 失败路径 | 有 `HAS_SD` 的 C5 目标 | `SDInterface.cpp:166-173`；`lang_var.h:169` | `HAS_SD` | microSD | 失败时 `supported=false` | 源码支持 | 高 | 无卡会不会挂死是未知 |
-| WiGLE / WDGWars | 有 `HAS_DIRECT_UPLOAD` 的目标 | `WiFiScan.cpp:11843`、`11901`、`12092` | `HAS_DIRECT_UPLOAD`、`HAS_SD` | SD、网络 | 命令名 `upload` 在。没有 `UploadWigle.cpp` | 源码支持 | 中 | 实网上传是未知 |
-| Wi-Fi 配置 | 共用 settings | `settings.h:22` | 无板级开关 | SPIFFS | 最多 5 组 | 源码支持 | 中 | 掉电后还在不在是未知 |
-| `info` / 内存 / SPIFFS 恢复 | 共用。电池段要 `HAS_BATTERY` | `WiFiScan.cpp:4888`；`MemoryGuard.h:12`；`SDInterface.cpp:228` | DevKit 未定义 `HAS_BATTERY` | UART、SD | 官方代码在，没有 Scout Lite 单独层 | 源码支持 | 中 | |
-| CLI 命令名 | 含无屏的 `MARAUDER_C5` | `CommandLine.h` | 无 | UART | `help`、`info`、`wardrive`、`stopscan`、`gpsdata`、`upload` 在 | 源码支持 | 高 | 与 SigRoam 是否一致是未知 |
-| Scout Lite 板型宏 | 无 | `configs.h` 无 `SCOUT` | 无 | 板级 | 尚未添加 | 未知 | 高 | 引脚未知，不能靠这份矩阵开代码 PR |
-| WebUI | 研究报告写在 Dual Mini | `CommandLine.h:14` 为注释 | 无 | 无 | 本树没有 `Web.cpp` | 未知 | 低 | 不是已证实的 C5 缺口。`DUAL_MINI_C5` 只是再定义 `MARAUDER_MINI_V3`（`configs.h:144-146`） |
-| POOM 的 GPS | `MARAUDER_POOM` | `configs.h:644-658` | 该目标未定义 `HAS_GPS` | GNSS | 只说明这个比较目标 | 未知 | 低 | 不能当成官方 C5 做不到 GPS |
-| XIAO 的 SD | `XIAO_ESP32_C5` | `configs.h:682-685` | `#undef HAS_SD` | SD | 只说明这个比较目标 | 未知 | 低 | `MARAUDER_C5` 仍有 `HAS_SD` |
-| v8 / Mini v3 宏 | 源码有宏 | `configs.h:571-641` | `-DMARAUDER_V8` / `-DMARAUDER_MINI_V3` | 屏 | 公开 `build_parallel.yml` 不编这两个 flag | 源码支持 | 低 | 私有构建是否发布二进制是未知 |
-| Pancake 屏和按键宏 | `MARAUDER_PANCAKE` | `configs.h:595-606` | `HAS_SCREEN`、`HAS_BUTTONS` | 屏、按键 | 宏是打开的 | 源码支持 | 低 | 研究报告「缺屏缺键」与宏不一致。实机是未知 |
+| 功能 | 在哪里打开 | C5 DevKit | Scout Lite 硬件 | 动作 |
+| --- | --- | --- | --- | --- |
+| GPS `HAS_GPS` | XIAO `518-522`，T-Dongle `560`，V8 `582`，Pancake `607`，Mini v3 `631`。POOM `644-659` 没有这个宏 | `538` 已定义。脚是 `GPS_TX 14`、`GPS_RX 13`（`2975-2978`） | 原理图与 DevKit 相同：GPIO14 是固件 RX，GPIO13 是固件 TX。实机未测 | 已在 C5 |
+| GPS 引脚 | T-Dongle `2967-2970` 为 12/11。XIAO `2971-2974` 为 12/11，注释写 GPIO13/14 留给 USB。V8 `2979-2982`、Pancake `2983-2986`、Mini v3 `2987-2990` 与 C5 同为 14/13。POOM 无 `HAS_GPS` | `2975-2978` | 与 C5 相同。Flipper pin 15/16 见下行 | 已在 C5 |
+| Flipper pin 15/16 上的 GPS | 无官方宏 | 无 | 已记录。不是任务 | 超出范围 |
+| microSD `HAS_C5_SD` / `HAS_SD` / `USE_SD` | T-Dongle `561-563`，V8 `583-585`，Pancake `608-610`，Mini v3 `632-634`，POOM `651-653`。XIAO `682-685` 把这三项 `#undef` | `539-541` 已定义 | SD 是 IO2/IO6/IO7/IO10。原理图确认，实机未测 | 已在 C5 |
+| microSD 引脚 | C5：`SD_CS 10`（`2706-2707`），`SD_MISO 2` / `SD_MOSI 7` / `SD_SCK 6`（`3212-3215`）。T-Dongle：`SD_CS 23`（`2708-2709`），MISO 7 / MOSI 2 / SCK 6（`3216-3219`）。V8：`SD_CS 10`（`2712-2713`），总线用 TFT 脚（`3222-3225`）。Pancake：`SD_CS 7`（`2716-2717`），总线用 TFT 脚（`3228-3231`）。Mini v3 屏段在 `HAS_SCREEN` 内写 `TFT_*` 和 `SD_CS 4`（`2211-2223`），后面又 `#define SD_CS 10`（`2720-2721`），MISO/MOSI/SCK 跟 TFT（`3270-3273`）。POOM：`SD_CS 5`（`2724-2725`），MISO 8 / MOSI 4 / SCK 6（`3276-3279`） | 见左，C5 四根脚已写出 | 与 C5 的四根脚一致。不要换成上列其他脚 | 已在 C5 |
+| 直接上传 `HAS_DIRECT_UPLOAD` | T-Dongle `568`，V8 `592`，Pancake `616`，Mini v3 `641`，POOM `658`。XIAO 的 `518-527` 没有这个宏。调用在 `WiFiScan.cpp:11750` | `547` 已定义 | 不另要屏或按键。实网上传未测 | 已在 C5 |
+| NeoPixel `HAS_NEOPIXEL_LED` | C5 `535`，Pancake `603`，POOM `648`。V8 `578` 与 Mini v3 `626` 是注释。XIAO、T-Dongle 不定义它。C5 的数据脚 `PIN 27`（`2860-2861`） | 宏开着，`PIN 27` | 原理图确认项里没有这颗灯。不把 DevKit 的 GPIO27 灯写成 Scout Lite 已有。不改这个宏 | 已在 C5 |
+| PSRAM `HAS_PSRAM` | XIAO `523`，T-Dongle `565`，V8 `587`，Pancake `612`，Mini v3 `636`，POOM `655`。打开后走 `BUF_SIZE` / `SNAP_LEN`（`3167-3170`）、`MAX_HTML_SIZE`（`2881-2882`）、`mac_history_len`（`2891-2892`），并调用 `psramInit()`（`esp32_marauder.ino:297-300`） | `543` 是注释。因此 `BUF_SIZE` 是 `3 * 1024`（`3173-3175`），`MAX_HTML_SIZE` 是 11400（`2883-2884`），`mac_history_len` 是 100（`2893-2894`）。FQBN 的 `PSRAM=enabled` 只加 `BOARD_HAS_PSRAM`，不是这个宏 | 丝印 N8R8 不是测到的启用。容量未知 | 未知 |
+| 屏幕、全屏菜单、迷你屏、ILI9341 图 | V8：`HAS_SCREEN` `580`、`HAS_FULL_SCREEN` `581`、`HAS_ILI9341` `1426`。Pancake：`595-606` 内的屏宏，`HAS_ILI9341` `1500`。Mini v3：`HAS_SCREEN` `629`、`HAS_MINI_SCREEN` `630`，屏段 `2211-2223`。POOM：`HAS_SCREEN` `649`、`HAS_MINI_SCREEN` `650`，几何 `1023-1038`。Packet monitor 图在 `WiFiScan.cpp:5003-5007`，以及 `10626-10628`（`#ifdef HAS_SCREEN` 里面） | `537` `HAS_SCREEN` 是注释。无屏分支在 `2755` | 没有屏幕。Mini v3 的 `TFT_CS 27` 与 C5 NeoPixel 的 `PIN 27` 是同一个脚号 | 硬件不具备 |
+| T-Dongle 屏 `HAS_T_DONGLE_DISPLAY` | 仅 T-Dongle `552`，脚 `556-559`。源文件 `TDongleDisplay.cpp` | 无 | 没有这块屏。SPI 脚与 Scout Lite 的 SD 脚冲突 | 硬件不具备 |
+| 按键 `HAS_BUTTONS` | Pancake `602`，脚在 `871-876`（只有 `C_BTN 28`）。Mini v3 `625`，脚在 `971-984`。POOM `646`，脚在 `999-1017`。V8 `577` 是注释 | `534` 是注释 | 板上只有 BOOT 和 EN。Flipper 不能进入下载模式 | 硬件不具备 |
+| 小键盘 `HAS_MINI_KB` | Mini v3 `628`，POOM `647` | 无 | 没有键盘 | 硬件不具备 |
+| 触摸 `HAS_TOUCH` / `HAS_CAP_TOUCH` | V8 `572`。Pancake `596-597`，电容触摸复位 `CTP_RST 8`（`3072`） | 无 | 没有触摸屏 | 硬件不具备 |
+| 电池 `HAS_BATTERY` | V8 `575`，I2C `SCL 4` / `SDA 5`（`3056-3058`）。Pancake `600`，I2C `SDA 9` / `SCL 10`（`3067-3070`），与触摸共用总线。Mini v3 `623` 是注释。XIAO、T-Dongle、POOM 不定义 | `532` 是注释 | 原理图确认项里没有电量计。不能借用 V8 或 Pancake 的 I2C 脚 | 未知 |
+| 活动灯 `HAS_ACT_LED` | 仅 V8 `591`。`ACT_LED_PIN 28`（`3337-3338`） | 无 | 原理图确认项里没有 GPIO28 灯 | 未知 |
+| T-Dongle LED `HAS_T_DONGLE_LED` | 仅 T-Dongle `553-555`。数据脚 2，时钟脚 6 | 无 | 脚 2 和脚 6 是 Scout Lite 的 SD MISO 和 SCK | 硬件不具备 |
+| XIAO 单色灯 `XIAO_LED_PIN` | 仅 XIAO `526`，值为 27。`esp32_marauder.ino:380-381` 在这个目标上走 `xiaoLED`，不走 NeoPixel | C5 不定义它。C5 的 GPIO27 已是 NeoPixel `PIN` | Scout Lite 不是 XIAO 模块。不要用另一套灯驱动占 GPIO27 | 硬件不具备 |
+| T-Dongle 16MB 分区 | workflow FQBN `FlashSize=16M,PartitionScheme=custom`（`.github/workflows/build_parallel.yml:48`）。表在 `installer/partitions/t_dongle_c5.csv:1` | DevKit FQBN 是 `FlashSize=8M,PartitionScheme=default_8MB`（`build_parallel.yml:46`，`scout-lite-ci.yml` 同字符串）。仓库里没有这份 8MB CSV | Flash 容量没有实测。丝印不是容量测量 | 未知 |
+| WebUI | 本树没有启用的 `Web.cpp`。`CommandLine.h:14` 的 `#include "Web.h"` 是注释。`DUAL_MINI_C5` 不增加网页源文件 | 无 | 不靠不存在的源码造功能 | 超出范围 |
+| SigRoam 优化 | 无本仓库实现。2026-10-15 文档曾把它当成方向 | 无 | 无 | 超出范围 |
+| FAP 合约测试 | 本仓库没有 FAP。2026-10-15 状态曾把它列为任务，证据是「没有命令清单」 | 无 | 无 | 超出范围 |
+| SigRoam 兼容 | 无 FAP 源码，无抓包。旧矩阵把这一行标成未知 | 官方 CLI 在 `CommandLine.h`，这是 Marauder 命令名，不是 SigRoam 合约 | 无 | 超出范围 |
+| USB 自动切换 | 无比较宏 | 不声称与 DevKit 相同 | 不调查 | 超出范围 |
+| Flipper 进入下载模式 | 无官方功能宏 | 无 | 只有板上 BOOT 和 EN。`PB2`/`PC3` 不是下载路径 | 硬件不具备 |
 
 ## Offensive
 
-只记名称、源文件、编译开关。状态都是源码支持。没有步骤和参数。
+这些名称在列出的 C5 目标上没有排除宏，因此不是差异行。`MARAUDER_C5` 也没有排除宏。只记名称和宏。`HAS_PSRAM` 只改变 `MAX_HTML_SIZE`（`configs.h:2881-2884`），不单列成另一项。
 
-- deauth：`esp32_marauder/WiFiScan.cpp`，`esp32_marauder/CommandLine.h`（`ATTACK_TYPE_DEAUTH`）。无 C5 排除宏。
-- beacon / probe / funny / rickroll / badmsg / sleep / sae / csa / quiet：`CommandLine.h` 的 `ATTACK_TYPE_*`，`WiFiScan.cpp`。无 C5 排除宏。
-- evil portal：`esp32_marauder/EvilPortal.cpp`，`CommandLine.h`（`EVIL_PORTAL_CMD`）。无 C5 排除宏。`HAS_PSRAM` 只影响 `MAX_HTML_SIZE`。
-- 凭据收集：`esp32_marauder/EvilPortal.cpp`。无单独板级宏。
-- karma：`CommandLine.h`（`KARMA_CMD`），`CommandLine.cpp`。无 C5 排除宏。
-- blespam / spoofat：`CommandLine.h`，`WiFiScan.cpp`。开关 `HAS_BT`；`MARAUDER_C5` 定义了它。
+- deauth：`ATTACK_TYPE_DEAUTH`
+- beacon：`ATTACK_TYPE_BEACON`
+- probe：`ATTACK_TYPE_PROBE`
+- funny：`ATTACK_TYPE_FUNNY`
+- rickroll：`ATTACK_TYPE_RR`
+- badmsg：`ATTACK_TYPE_BM`
+- sleep：`ATTACK_TYPE_S`
+- sae：`ATTACK_TYPE_SAE`
+- csa：`ATTACK_TYPE_CSA`
+- quiet：`ATTACK_TYPE_QUIET`
+- evilportal：`EVIL_PORTAL_CMD`
+- karma：`KARMA_CMD`
+- blespam：`BT_SPAM_CMD`，还要 `HAS_BT`
+- spoofat：`BT_SPOOFAT_CMD`，还要 `HAS_BT`
+
+宏在 `esp32_marauder/CommandLine.h:74-75`、`99-108`、`126`、`129`。
+
+## 历史证据
+
+不删除。2026-10-15 的矩阵用过另一套中文状态，基线当时写成 `d3ceb28afeda1196ca27c13adeaa69ada52383f3`。同一次记录：native 测试 134/134，以及该 commit 上未刷机的 app bin SHA256 `1d572f57bb1f90cf063952672414413e194ee7aef00de1c66218238dc26b60a8`。那些数字只证明当时的构建，不证明实机功能。
+
+当时 SigRoam 行是「未知」，依据是本仓库没有 FAP。2026-10-16 起这三行是 `超出范围`。没有 FAP 这个事实还在。

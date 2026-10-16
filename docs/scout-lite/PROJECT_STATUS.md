@@ -24,6 +24,7 @@ scout-lite-upstream-stable-tag: v1.18.0
 - `docs/scout-lite/deep-research-report-2.md`
 - `docs/scout-lite/PROJECT_CHARTER.md`（含 2026-10-16 范围更正，原文未整章重写）
 - `docs/scout-lite/MINIMAL_CHANGE_PLAN.md`
+- `docs/scout-lite/INTERNAL_BETA.md`
 
 ## 1. 构建与版本基线
 
@@ -37,7 +38,7 @@ scout-lite-upstream-stable-tag: v1.18.0
 | SD / GPS 固件脚 | Colin 2026-10-15：重要接线按 ESP32-C5 DevKit 的 `MARAUDER_C5`。SD 是 IO2/IO6/IO7/IO10。GPS 固件脚是 GPIO14=`GPS_TX`（RX），GPIO13=`GPS_RX`（TX） | `HARDWARE.md` | 原理图确认。实机未测。不是 `CONFIRMED_WORKING` |
 | USB 自动切换 | 不声称与 DevKit 相同 | `HARDWARE.md` | 不再调查，除非以后的任务需要 |
 | 下载模式 | 实板不能由 Flipper 进入下载模式。只有板上 BOOT 和 EN。`PB2`/`PC3` 不是下载路径 | `HARDWARE.md` | Colin 2026-10-15。不是功能项的 `CONFIRMED_WORKING` |
-| 当前可复现构建 | `b242f00` 上 PR CI 为 SUCCESS：workflow `Firmware Unit Tests` 的 `Native Unity tests`，workflow `Scout Lite CI` 的 `Native Unity tests`，以及 `Compile MARAUDER_C5`。`d3ceb28` 本地 app bin SHA256 `1d572f57bb1f90cf063952672414413e194ee7aef00de1c66218238dc26b60a8`。未发布，未刷机 | [PR #1](https://github.com/pingequalab/ESP32Marauder/pull/1) | E2。未刷机 |
+| 当前可复现构建 | 2026-10-16 在 commit `8b73c1905e810771da7f97fac63e89b2f5d9c1b3` 重编未修改的 `MARAUDER_C5`。退出码 0。app bin SHA256 `e8c5b57f16745a2bcfbd5e8752fa68301345262cb4f6578556ae1b6316a681f0`。更早的 `d3ceb28` 本地 bin 是 `1d572f57bb1f90cf063952672414413e194ee7aef00de1c66218238dc26b60a8`；两次 sketch 大小都是 1873710 字节，差异是编译日期字符串。`b242f00` 上 PR CI 的 `Compile MARAUDER_C5` 仍是 SUCCESS。未发布，未刷机 | `docs/scout-lite/INTERNAL_BETA.md`；[PR #1](https://github.com/pingequalab/ESP32Marauder/pull/1) | E2。未修改的官方目标。不是功能移植。未刷机 |
 | 当前客户可用稳定版 | 无 | 无发布记录 | 未发布。不是客户稳定固件 |
 
 GPS 接到 Flipper pin 15 和 16，不是官方 GPIO13/14。已记录。2026-10-16 起超出范围，不计划改固件。
@@ -102,7 +103,8 @@ GPS 接到 Flipper pin 15 和 16，不是官方 GPIO13/14。已记录。2026-10-
 | 2026-10-15 | Colin 确认 SD/GPS 接线，USB 开关除外 | `HARDWARE.md`。原理图确认，实机未测，不是 `CONFIRMED_WORKING`。未改固件，未合并，未刷机 | 当天留下的非关键走线问题已在下一条关闭 |
 | 2026-10-15 | Colin 收窄硬件范围 | 重要接线仍是 DevKit 的 SD 与 GPS 固件脚。下载模式只有板上 BOOT 和 EN。非关键走线不再追查。USB 自动切换仍不声称与 DevKit 相同。未改固件，未合并，未刷机 | 实机未测。PSRAM 容量 UNKNOWN。不是 `CONFIRMED_WORKING` |
 | 2026-10-16 | 章程 PR 已在 `master` | [PR #2](https://github.com/pingequalab/ESP32Marauder/pull/2)，合并 `f4bc76727e7f29b7ca64da9c972c9103523c6006`。固件相对 `d3ceb28` 只多了文档和 CI yml，没有功能宏改动 | 该合并里的状态文件当时仍写章程未合并。本节更正这一点 |
-| 2026-10-16 | 范围改为最全官方功能的最小移植，SigRoam 超出范围 | `FEATURE_MATRIX.md`、`MINIMAL_CHANGE_PLAN.md`、章程更正节。没有 `可最小打开` 行。未改固件 | 内部 beta 的命令和 SHA256 见 `INTERNAL_BETA.md`。不发版，不刷机 |
+| 2026-10-16 | 范围改为最全官方功能的最小移植，SigRoam 超出范围 | `FEATURE_MATRIX.md`、`MINIMAL_CHANGE_PLAN.md`、章程更正节。没有 `可最小打开` 行。未改固件 | 不发版，不刷机 |
+| 2026-10-16 | 内部 beta：重编未修改的 `MARAUDER_C5` | 编译 commit `8b73c1905e810771da7f97fac63e89b2f5d9c1b3`。退出码 0。app bin SHA256 `e8c5b57f16745a2bcfbd5e8752fa68301345262cb4f6578556ae1b6316a681f0`。命令在 `INTERNAL_BETA.md`。bin 未提交，未上传 Release，未刷机 | 不是 Scout Lite 功能移植。不是客户固件 |
 
 ## 8. 最近一次同步摘要
 

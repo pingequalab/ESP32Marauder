@@ -80,7 +80,7 @@ GPS 接到 Flipper pin 15 和 16，不是官方 GPIO13/14。已记录。2026-10-
 2026-10-15 的任务 2 是「有 FAP 清单再做 SigRoam 合约测试」。2026-10-16 起该项超出范围。本仓库没有 FAP 的证据仍留在第 3 节。
 
 1. 不为已对齐的 SD/GPS 宏改固件。实机仍不是 `CONFIRMED_WORKING`。依赖：实机日志。不适合上游 PR。不打开功能移植 PR。
-2. Phase 1 已进 CLI `upload`：sidecar 跳过、仅当上传前正在 wardrive 且没有失败文件时回到 wardrive、单文件再试 2 次。无 fix 不占 MAC 也已做。无屏 `upload` 会从 SD 根填 `wardrive_` / `wigle-` 日志，空指针不解引用。触发 SSID 用已有设置键 `t_ssid` / `t_pass`，不新加命令。回复仍是原来的 `Upload OK`、`WiGLE failed`、`Upload complete`、`StartingWardrive. Stop with stopscan` 和已有 `[UPLOAD]` 行。Phase 2 不做：SSID 排除、无屏删日志。不做扫描器重写、Node/Core、ESP-NOW、SigRoam、屏幕 UI、PSRAM。依赖：`MINIMAL_CHANGE_PLAN.md` 第 1b 节。不适合整段上游 PR。
+2. Phase 1 已进 CLI `upload`：sidecar 跳过、仅当上传前正在 wardrive 且没有失败文件时回到 wardrive、单文件再试 2 次。无 fix 不占 MAC 也已做。无屏 `upload` 会从 SD 根填 `wardrive_` / `wigle-` 日志，空指针不解引用。触发 SSID 已删：没有 `t_ssid` / `t_pass`，也没有新的串口句子。回复仍是原来的 `Upload OK`、`WiGLE failed`、`Upload complete`、`StartingWardrive. Stop with stopscan` 和已有 `[UPLOAD]` 行。命令停在 Flipper 应用 `flipperzero-wifi-marauder` 已经发送的内容，以及 `[BUF/BEGIN]`、`[BUF/CLOSE]`。Phase 2 不做：SSID 排除、无屏删日志。不做扫描器重写、Node/Core、ESP-NOW、SigRoam、屏幕 UI、PSRAM、Dock 触发。依赖：`MINIMAL_CHANGE_PLAN.md` 第 1b 节。不适合整段上游 PR。
 3. `HAS_PSRAM` 保持注释，直到有运行时容量。需要屏、按键或 Flipper 下载控制的代码不移植。Phase 1 的 C5 构建记录见 `INTERNAL_BETA.md`。不提交 bin，不上传 Release，不刷机。
 
 ## 6. Decision Pending

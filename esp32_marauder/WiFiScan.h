@@ -1115,9 +1115,6 @@ class WiFiScan
       bool any_sent = false;
     };
     WardriveUploadResult uploadWardriveLogs(uint8_t upload_type);
-    void connectTriggerAndUpload(const String& trigger);
-    void pollTriggerHold(uint32_t currentTime);
-    void resumeWardriveWithoutNewLog();
     String checkEmptyProbe(String essid);
     bool checkFlockOUI(const uint8_t mac[6]);
     bool startWiFi(String ssid, String password, bool gui = true);
@@ -1178,7 +1175,7 @@ class WiFiScan
     bool shutdownWiFi();
     bool shutdownBLE();
     bool scanning();
-    bool joinWiFi(String ssid, String password, bool gui = true, bool save_credential = true, bool stop_on_fail = true);
+    bool joinWiFi(String ssid, String password, bool gui = true, bool save_credential = true);
     bool joinSavedWiFi(bool gui = true);
     void reloadGeofences();
     bool isGeofencePaused() const { return geofence_paused; }
@@ -1204,10 +1201,6 @@ class WiFiScan
     void RunSetupGPSTracker(uint8_t scan_mode);
     void channelHop(bool filtered = false, bool ranged = false);
     uint8_t currentScanMode = 0;
-    bool trigger_hold = false;
-    uint8_t trigger_misses = 0;
-    uint32_t trigger_check_ms = 0;
-    String trigger_ssid_hold = "";
     void main(uint32_t currentTime);
     void StartScan(uint8_t scan_mode, uint16_t color = 0);
     void StopScan(uint8_t scan_mode);

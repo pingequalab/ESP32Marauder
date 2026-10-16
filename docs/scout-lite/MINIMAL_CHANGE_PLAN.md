@@ -27,9 +27,11 @@ Phase 1，本提交：
 
 Phase 2，现在不做：SSID 排除表；无屏删除日志的 CLI。
 
-有限触发已做：设置键 `t_ssid` / `t_pass`（空 SSID 关闭）。只对当前扫描结果做大小写全等，只连这一个 SSID，最多 3 次，超时沿用 `joinWiFi()`。有 fix 才 `uploadWardriveLogs(BOTH_UPLOAD)`。连上之后每 30 秒看一次，连续 2 次没有就断开并 `StartScan(WIFI_SCAN_WAR_DRIVE)`，从而新开日志。连接 3 次都失败则回到 wardrive，不开新日志。串口只用原来的 `Upload OK`、`WiGLE failed`、`Upload complete`、`StartingWardrive. Stop with stopscan` 和已有的 `[UPLOAD]` / `Connecting to WiFi` 行。不搬 `runDockMode()`。
+触发 SSID 已删。Flipper 应用 `flipperzero-wifi-marauder`（`feature_wifi_marauder_app`，`d6e8c4d`）不会发 `t_ssid` 或 `t_pass`。不留设置键，不留 `/t_ssid.txt` / `/t_pass.txt`，不留 3 次连接循环和 30 秒离开检查，不加新的串口句子。
 
-不做：重写扫描器、Node/Core、ESP-NOW、SigRoam、屏幕 UI、新命令、新的回复句子。
+留下的只有该应用已经会发的 `upload -d wigle|wdg|both`：无屏从 SD 根收集 `wardrive_` / `wigle-`，sidecar 跳过，单文件失败再试 2 次。全部成功且上传前是 `WIFI_SCAN_WAR_DRIVE` 时走已有 `startScanFromCLI`，原文仍是 `StartingWardrive. Stop with stopscan`。回复保持 `Upload OK`、`WiGLE failed`、`Upload complete` 和已有 `[UPLOAD]` 行。`[BUF/BEGIN]` / `[BUF/CLOSE]` 不改。`wardrive`、`stopscan`、`gpsdata`、`ls`、`settings` 的含义不改。
+
+不做：重写扫描器、Node/Core、ESP-NOW、SigRoam、屏幕 UI、新命令、新的回复句子、Dock 触发。
 
 ## 2. `HAS_PSRAM`：现在不打开
 

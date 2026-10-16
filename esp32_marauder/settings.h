@@ -18,8 +18,6 @@
 #endif
 
 #define WDG_KEY_NAME       "wdg_key"   // WDG Wars API key (String)
-#define TRIGGER_SSID_NAME  "t_ssid"
-#define TRIGGER_PASS_NAME  "t_pass"
 #define SAVED_WIFI_KEY_NAME "SavedWiFi"
 #define MAX_SAVED_WIFI_PROFILES 5
 #define GEOFENCES_KEY_NAME "Geofences"
@@ -60,8 +58,6 @@ class Settings {
       String wu           = "";
       String wt           = "";
       String wdg_key      = "";
-      String trigger_ssid = "";
-      String trigger_pass = "";
     } _cache;
 
     void _buildCache();  // parse json_settings_string -> _cache

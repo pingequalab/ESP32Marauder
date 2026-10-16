@@ -40,6 +40,8 @@ class GpsInterface {
     void main();
 
     int getNumSats();
+    uint32_t getGgaCount();
+    uint32_t getGgaFixCount();
     String getNumSatsString();
     bool getFixStatus();
     String getFixStatusAsString();
@@ -105,6 +107,8 @@ class GpsInterface {
     bool good_fix = false;
     char nav_system='\0';
     uint8_t num_sats = 0;
+    uint32_t gga_count = 0;
+    uint32_t gga_fix_count = 0;
 
     type_t type_flag = GPSTYPE_NATIVE;
 

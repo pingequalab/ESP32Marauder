@@ -1,4 +1,5 @@
 #include "GpsInterface.h"
+#include <string.h>
 
 #ifdef HAS_GPS
 
@@ -629,6 +630,14 @@ String GpsInterface::getNumSatsString() {
   return (String)num_sats;
 }
 
+uint32_t GpsInterface::getGgaCount() {
+  return this->gga_count;
+}
+
+uint32_t GpsInterface::getGgaFixCount() {
+  return this->gga_fix_count;
+}
+
 int GpsInterface::getNumSats() {
   return num_sats;
 }
@@ -756,7 +765,14 @@ void GpsInterface::main() {
     char c = Serial2.read();
     //Serial.print(c);
     //Pass the character to the library
-    nmea.process(c);
+    if (nmea.process(c)) {
+      const char* message_id = nmea.getMessageID();
+      if (message_id && strcmp(message_id, "GGA") == 0) {
+        this->gga_count++;
+        if (nmea.isValid())
+          this->gga_fix_count++;
+      }
+    }
   }
 
   uint8_t num_sat = nmea.getNumSatellites();

@@ -20,7 +20,7 @@ Wi-Fi、GPS、SD、wardrive 仍走现有模块：`WiFiScan.cpp`、`GpsInterface.
 
 标准动词保持唯一含义。SigRoam 已经会发、而且必须继续按原义处理的，是 `wardrive`、`wardrive -serial`、`stopscan`、`gpsdata`、`wardrivepoi`、`info`。`wardrive -serial` 用的是现有的 `-serial` 开关（`CommandLine.cpp` 在扫描命令前读取），不另作解释。
 
-SigRoam 应用另外发送 `upload`（没有 `-d`）和 `uploadstatus`，并解析 `Radio:`、`Qual:`、`Sess:`、`Busy:`、`Diag:`、`Up:`、`Rank:`、`Cfg:`。这些不是标准菜单命令，也不能塞进 `upload -d` 或 `info` 的回复。它们以后只用一个标准菜单从未发送的前缀进入。该前缀尚未实现，本文件不规定具体拼写。在它落地之前，固件不响应这两条裸命令的新含义，也不印刷那些前缀行。
+SigRoam 应用另外发送 `upload`（没有 `-d`）和 `uploadstatus`，并解析 `Radio:`、`Qual:`、`Sess:`、`Busy:`、`Diag:`、`Up:`、`Rank:`、`Cfg:`。这些不是标准菜单命令，也不能塞进 `upload -d` 或 `info` 的回复。`v0.6.1` 不发送请求这些行的前缀，而是把它们当成 `#info` 的后半。本固件不追加到 `info`。状态命令是 `sigroam`，标准菜单没有这个词，只打印这八行。不把裸 `upload` 或 `uploadstatus` 接上 `upload -d`。
 
 `info` 在标准固件里会进入 `SHOW_INFO`。SigRoam 应用自己对非 SigRoam 版本补发 `stopscan`。不改 `info` 去迁就这一步。
 

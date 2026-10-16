@@ -90,7 +90,7 @@ Phase 2，现在不做：SSID 排除表；无屏删除日志的 CLI。
 
 1. 冻结标准 CLI。不改 `flipperzero-wifi-marauder` 已经发送的命令、回复和 `[BUF/BEGIN]` / `[BUF/CLOSE]`。目录固定的是 `v0.7.6`；默认分支 `v0.7.12` 还没有 Release。矩阵见 `FLIPPER_MARAUDER_COMPATIBILITY_MATRIX.md`。
 2. 保持一块 `MARAUDER_C5` 固件。不为 SigRoam 另做分区、板型宏或第二套 `executeWarDrive()`。
-3. 给 SigRoam 加一个标准菜单从未发送的命令前缀。只覆盖 GPS 状态、双频计数、记录质量、会话、上传状态、错误恢复。调用现有 `WiFiScan`、`GpsInterface`、`SDInterface`、`Buffer`。前缀的回复只在该前缀下出现。
+3. 前缀 `sigroam` 已接上。标准菜单不发送它。只回 `Diag:`、`Busy:`、`Sess:`、`Qual:`、`Radio:`、`Up:`、`Rank:`、`Cfg:`。不追加到标准命令，不加 `upload` 别名。
 4. 不把 SigRoam 的裸 `upload` / `uploadstatus` 并进 `upload -d`。`upload -d wigle|wdg|both` 保持现在的无屏收集和 sidecar 行为。
 5. 不改 `info`。SigRoam 应用自己对普通 Marauder 版本补 `stopscan`。不改 `wardrive`、`stopscan`、`gpsdata`、`wardrivepoi`。
 6. 目录版 `v0.7.6` 和当前固件对不齐、但本顺序不动的项：没有活动入口的 `scanap`、`scansta`、`sigmon`、`btwardrive`；`blespam -t apple` 对不上固件的 `sourapple`；`wardrive -s` 被注释后仍只启动现有 wardrive。不恢复，不新造，不加别名。它们不是双应用的 wardriving 路径。

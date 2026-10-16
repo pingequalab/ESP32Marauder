@@ -1115,6 +1115,7 @@ class WiFiScan
       bool any_sent = false;
     };
     WardriveUploadResult uploadWardriveLogs(uint8_t upload_type);
+    void printSigRoamStatus();
     String checkEmptyProbe(String essid);
     bool checkFlockOUI(const uint8_t mac[6]);
     bool startWiFi(String ssid, String password, bool gui = true);
@@ -1201,6 +1202,8 @@ class WiFiScan
     void RunSetupGPSTracker(uint8_t scan_mode);
     void channelHop(bool filtered = false, bool ranged = false);
     uint8_t currentScanMode = 0;
+    bool sig_session_on = false;
+    uint32_t sig_session_start_ms = 0;
     void main(uint32_t currentTime);
     void StartScan(uint8_t scan_mode, uint16_t color = 0);
     void StopScan(uint8_t scan_mode);

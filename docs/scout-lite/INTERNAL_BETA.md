@@ -135,3 +135,31 @@ app bin：`/tmp/c5-build-feature-gap/esp32_marauder.ino.bin`，磁盘长度 1874
 ```
 
 bin 未提交，未上传 Release，未刷机。上一节 SHA256 含触发 SSID，不是这一笔。
+
+## `sigroam` 状态前缀
+
+日期：2026-10-16。固件 commit `315e7d401e3c901afec72bc8edb9a542f1268c54`。命令 `sigroam` 只打印 `Diag:`、`Busy:`、`Sess:`、`Qual:`、`Radio:`、`Up:`、`Rank:`、`Cfg:`。不追加到 `info`、`gpsdata`、`wardrive`、`stopscan`、`wardrivepoi`。没有 `upload` 别名，没有 `t_ssid`。`[BUF/BEGIN]` / `[BUF/CLOSE]` 未改。
+
+同一条命令：
+
+```
+/tmp/bin/arduino-cli compile \
+  --fqbn esp32:esp32:esp32c5:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=enabled \
+  --libraries /tmp/marauder-libs \
+  --build-property compiler.cpp.extra_flags=-DMARAUDER_C5 \
+  --warnings none \
+  --build-path /tmp/c5-build-feature-gap \
+  /tmp/scout-lite-worktrees/feature-gap/esp32_marauder
+```
+
+开始 `2026-10-16T07:01:35Z`，结束 `2026-10-16T07:01:53Z`，退出码 0。
+
+Arduino 输出：Sketch uses 1877042 bytes (56%) of program storage space. Maximum is 3342336 bytes.
+
+app bin：`/tmp/c5-build-feature-gap/esp32_marauder.ino.bin`，磁盘长度 1877152 字节。`sketch/WiFiScan.cpp.o`、`sketch/CommandLine.cpp.o`、`sketch/GpsInterface.cpp.o` 在这次编译里重新生成。
+
+```
+dba89828d204cfb1e9fa799af086135ddd18d82e2f9ef449b1e5f0897a8ec04b
+```
+
+bin 未提交，未上传 Release，未刷机。硬件步骤用上面的路径，不从 git 取 bin。

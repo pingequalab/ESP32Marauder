@@ -75,3 +75,19 @@ app bin：`/tmp/c5-build-feature-gap/esp32_marauder.ino.bin`，磁盘长度 1874
 ```
 
 `build.options.json` 的 fqbn 仍是 `esp32:esp32:esp32c5:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=enabled`，`compiler.cpp.extra_flags=-DMARAUDER_C5`。bin 未提交，未上传 Release，未刷机。上面未改宏的 SHA256 仍然有效，它不是这一笔。
+
+## 无 fix 不占 MAC
+
+日期：2026-10-16。编译时 HEAD 是 `b376eb64e20ec51fe3587205f01cc504a898f489`。`save_mac()` 只在 wardrive 行 `append` 之后调用。路径是 `executeWarDrive()`、`beaconSnifferCallback()`、以及 NimBLE 2 的 wardrive `onResult()`。没有改频道表，没有加 SSID 排除、Dock、删除 CLI 或 `HAS_PSRAM`。
+
+同一条命令。开始 `2026-10-16T01:27:46Z`，结束 `2026-10-16T01:27:57Z`，退出码 0。
+
+Arduino 输出：Sketch uses 1873920 bytes (56%) of program storage space. Maximum is 3342336 bytes.
+
+app bin 仍是 `/tmp/c5-build-feature-gap/esp32_marauder.ino.bin`，磁盘长度 1874032 字节。`sketch/WiFiScan.cpp.o` 在这次编译里重新生成。
+
+```
+9005e18a9d563b9cd62c415e0b8f5837d7bab8beb5300e76ce5dab0d746fa4f2
+```
+
+bin 未提交，未上传 Release，未刷机。Phase 1 的 SHA256 是上一节，不是这一笔。

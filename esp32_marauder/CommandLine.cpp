@@ -695,42 +695,14 @@ void CommandLine::runCommand(String input) {
           return;
         }
         delay(1000);
-        bool upload_failed = false;
-        for (int i = 0; i < sd_obj.sd_files->size(); i++) {
-          if (sd_obj.sd_files->get(i).startsWith("wardrive_") || sd_obj.sd_files->get(i).startsWith("wigle-")) {
-            if (!sd_obj.sd_files->get(i).endsWith(".wigle") && !sd_obj.sd_files->get(i).endsWith(".wdg") && !sd_obj.sd_files->get(i).endsWith(".gpx")) {
-              Serial.println("Uploading " + sd_obj.sd_files->get(i) + "...");
-              bool uploaded = false;
-              // Three tries total. This loop is not uploadFile's retry flag.
-              // false honors an existing .wigle/.wdg sidecar. No force-reupload flag exists.
-              for (uint8_t attempt = 0; attempt < 3; attempt++) {
-                if (attempt > 0) {
-                  Serial.print(F("Upload attempt "));
-                  Serial.print(attempt + 1);
-                  Serial.print(F(" of 3: "));
-                  Serial.println(sd_obj.sd_files->get(i));
-                }
-                uploaded = wifi_scan_obj.uploadFile("/" + sd_obj.sd_files->get(i), false, upload_dest);
-                if (uploaded)
-                  break;
-              }
-              if (uploaded) {
-                Serial.println("Upload OK");
-              } else {
-                Serial.println("WiGLE failed");
-                upload_failed = true;
-              }
-            }
-          }
-        }
+        WiFiScan::WardriveUploadResult result = wifi_scan_obj.uploadWardriveLogs(upload_dest);
         WiFi.disconnect(true);
         delay(100);
-        if (!upload_failed && mode_before_upload == WIFI_SCAN_WAR_DRIVE)
+        if (!result.any_failed && mode_before_upload == WIFI_SCAN_WAR_DRIVE)
           this->startScanFromCLI(WIFI_SCAN_WAR_DRIVE, TFT_GREEN, "Wardrive");
         else
           wifi_scan_obj.StartScan(WIFI_SCAN_OFF, TFT_RED);
-
-        Serial.println("Upload complete");
+        Serial.println(F("Upload complete"));
       }
     #else
       Serial.println("Direct upload not supported");

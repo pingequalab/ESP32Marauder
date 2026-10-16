@@ -2015,6 +2015,27 @@ void WiFiScan::RunSetup() {
         api_settings_file.close();
       }
 
+      const char* trigger_files[2] = {"/t_ssid.txt", "/t_pass.txt"};
+      const char* trigger_keys[2] = {TRIGGER_SSID_NAME, TRIGGER_PASS_NAME};
+      for (uint8_t i = 0; i < 2; i++) {
+        if (!SD.exists(trigger_files[i]))
+          continue;
+        String contents = "";
+        api_settings_file = sd_obj.getFile(trigger_files[i]);
+        while (api_settings_file.available())
+          contents += (char)api_settings_file.read();
+        while (contents.length() > 0) {
+          char c = contents[contents.length() - 1];
+          if (c == '\n' || c == '\r')
+            contents.remove(contents.length() - 1);
+          else
+            break;
+        }
+        if (settings_obj.saveSetting<bool>(trigger_keys[i], contents))
+          sd_obj.removeFile(trigger_files[i]);
+        api_settings_file.close();
+      }
+
 
     }
   #endif
@@ -2392,7 +2413,7 @@ void WiFiScan::finishNetworkScanDisplay(const String& result_label) {
 }
 // GCOVR_EXCL_STOP
 
-bool WiFiScan::joinWiFi(String ssid, String password, bool gui, bool save_credential) {
+bool WiFiScan::joinWiFi(String ssid, String password, bool gui, bool save_credential, bool stop_on_fail) {
   static const char * btns[] ={text16, ""};
   int count = 0;
   
@@ -2455,7 +2476,8 @@ bool WiFiScan::joinWiFi(String ssid, String password, bool gui, bool save_creden
         }
       #endif
       this->wifi_initialized = true;
-      this->StartScan(WIFI_SCAN_OFF, TFT_BLACK);
+      if (stop_on_fail)
+        this->StartScan(WIFI_SCAN_OFF, TFT_BLACK);
       #ifdef HAS_SCREEN
         display_obj.tft.setTextWrap(false, false);
       #endif
@@ -2777,6 +2799,8 @@ void WiFiScan::StartScan(uint8_t scan_mode, uint16_t color) {
   else if (scan_mode == WIFI_SCAN_AP)
     RunBeaconScan(scan_mode, color);
   else if (scan_mode == WIFI_SCAN_WAR_DRIVE) {
+    this->trigger_hold = false;
+    this->trigger_misses = 0;
     this->reloadGeofences();
     this->geofence_paused = false;
     this->active_geofence_name = "";
@@ -6222,6 +6246,8 @@ void WiFiScan::setBaseMacAddress(uint8_t macAddr[6]) {
   #endif
 }*/
 
+static bool triggerVisibleInScan(int scan_status, const String& trigger);
+
 void WiFiScan::executeWarDrive() {
   #ifdef HAS_GPS
     if (gps_obj.getGpsModuleStatus()) {
@@ -6301,6 +6327,14 @@ void WiFiScan::executeWarDrive() {
       bool wifi_scan_done = (scan_status >= 0);
 
       if (scan_status >= 0) {
+        String trigger = settings_obj.loadSetting<String>(TRIGGER_SSID_NAME);
+        if (trigger.length() > 0 && triggerVisibleInScan(scan_status, trigger) &&
+            gps_obj.getFixStatus()) {
+          WiFi.scanDelete();
+          this->connectTriggerAndUpload(trigger);
+          return;
+        }
+
         for (int i = 0; i < scan_status; i++) {
           do_save = gps_obj.getFixStatus();
 
@@ -11839,6 +11873,132 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
     }
   }
 
+  WiFiScan::WardriveUploadResult WiFiScan::uploadWardriveLogs(uint8_t upload_type) {
+    WardriveUploadResult result;
+    if (!sd_obj.supported || !sd_obj.collectWardriveLogs() || sd_obj.sd_files == nullptr)
+      return result;
+
+    for (int i = 0; i < sd_obj.sd_files->size(); i++) {
+      String name = sd_obj.sd_files->get(i);
+      result.any_file = true;
+      bool wants_wigle = upload_type == WIGLE_UPLOAD || upload_type == BOTH_UPLOAD;
+      bool wants_wdg = upload_type == WDG_UPLOAD || upload_type == BOTH_UPLOAD;
+      bool wigle_done = !wants_wigle || this->sidecarExists("/" + name, "wigle");
+      bool wdg_done = !wants_wdg || this->sidecarExists("/" + name, "wdg");
+      if (wigle_done && wdg_done) {
+        if (this->uploadFile("/" + name, false, upload_type))
+          Serial.println(F("Upload OK"));
+        continue;
+      }
+
+      Serial.println("Uploading " + name + "...");
+      bool uploaded = false;
+      for (uint8_t attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) {
+          Serial.print(F("Upload attempt "));
+          Serial.print(attempt + 1);
+          Serial.print(F(" of 3: "));
+          Serial.println(name);
+        }
+        uploaded = this->uploadFile("/" + name, false, upload_type);
+        if (uploaded)
+          break;
+      }
+      if (uploaded) {
+        Serial.println(F("Upload OK"));
+        result.any_sent = true;
+      } else {
+        result.any_failed = true;
+        Serial.println(F("WiGLE failed"));
+      }
+    }
+    return result;
+  }
+
+  static bool triggerVisibleInScan(int scan_status, const String& trigger) {
+    for (int i = 0; i < scan_status; i++) {
+      if (WiFi.SSID(i) == trigger)
+        return true;
+    }
+    return false;
+  }
+
+  static bool triggerVisibleNow(const String& trigger) {
+    int found = WiFi.scanNetworks(false, true, false, 100);
+    bool visible = found > 0 && triggerVisibleInScan(found, trigger);
+    WiFi.scanDelete();
+    return visible;
+  }
+
+  void WiFiScan::resumeWardriveWithoutNewLog() {
+    this->trigger_hold = false;
+    this->trigger_misses = 0;
+    this->shutdownWiFi();
+    this->startWardriverWiFi();
+    this->wifi_initialized = true;
+    this->currentScanMode = WIFI_SCAN_WAR_DRIVE;
+  }
+
+  void WiFiScan::connectTriggerAndUpload(const String& trigger) {
+    #ifdef HAS_GPS
+    extern GpsInterface gps_obj;
+    String password = settings_obj.loadSetting<String>(TRIGGER_PASS_NAME);
+    bool connected = false;
+    for (uint8_t attempt = 1; attempt <= 3; attempt++) {
+      connected = this->joinWiFi(trigger, password, false, false, false);
+      if (connected)
+        break;
+      WiFi.disconnect(true);
+      delay(100);
+    }
+
+    if (!connected) {
+      this->resumeWardriveWithoutNewLog();
+      return;
+    }
+
+    if (!gps_obj.getFixStatus()) {
+      WiFi.disconnect(true);
+      delay(100);
+      Serial.println(F("StartingWardrive. Stop with stopscan"));
+      this->StartScan(WIFI_SCAN_WAR_DRIVE, TFT_GREEN);
+      return;
+    }
+
+    this->uploadWardriveLogs(BOTH_UPLOAD);
+
+    this->trigger_ssid_hold = trigger;
+    this->trigger_hold = true;
+    this->trigger_misses = 0;
+    this->trigger_check_ms = millis();
+    this->currentScanMode = WIFI_SCAN_WAR_DRIVE;
+    #endif
+  }
+
+  void WiFiScan::pollTriggerHold(uint32_t currentTime) {
+    if (!this->trigger_hold)
+      return;
+    if (currentTime - this->trigger_check_ms < 30000)
+      return;
+    this->trigger_check_ms = currentTime;
+
+    if (triggerVisibleNow(this->trigger_ssid_hold)) {
+      this->trigger_misses = 0;
+      return;
+    }
+
+    this->trigger_misses++;
+    if (this->trigger_misses < 2)
+      return;
+
+    this->trigger_hold = false;
+    this->trigger_misses = 0;
+    WiFi.disconnect(true);
+    delay(100);
+    Serial.println(F("StartingWardrive. Stop with stopscan"));
+    this->StartScan(WIFI_SCAN_WAR_DRIVE, TFT_GREEN);
+  }
+
   bool WiFiScan::uploadFile(String filePath, bool retry, uint8_t upload_type) {
     #ifdef HAS_SCREEN
     display_obj.clearScreen();
@@ -12815,7 +12975,9 @@ void WiFiScan::main(uint32_t currentTime)
     }
   }
   else if (currentScanMode == WIFI_SCAN_WAR_DRIVE) {
-    if (currentTime - initTime >= this->channel_hop_delay * HOP_DELAY)
+    if (this->trigger_hold) {
+      this->pollTriggerHold(currentTime);
+    } else if (currentTime - initTime >= this->channel_hop_delay * HOP_DELAY)
     {
       initTime = millis();
       #ifdef HAS_GPS

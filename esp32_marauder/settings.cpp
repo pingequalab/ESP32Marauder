@@ -33,6 +33,21 @@ static JsonObject findGeofenceSetting(DynamicJsonDocument& json) {
   return JsonObject();
 }
 
+static bool ensureEmptyStringSetting(DynamicJsonDocument& json, const char* name) {
+  for (JsonObject setting : json["Settings"].as<JsonArray>()) {
+    if (strcmp(setting["name"] | "", name) == 0)
+      return false;
+  }
+  JsonObject setting = json["Settings"].as<JsonArray>().createNestedObject();
+  setting["name"] = name;
+  setting["type"] = "String";
+  setting["value"] = "";
+  JsonObject range = setting.createNestedObject("range");
+  range["min"] = "";
+  range["max"] = "";
+  return true;
+}
+
 static JsonObject ensureGeofenceSetting(DynamicJsonDocument& json) {
   JsonObject setting = findGeofenceSetting(json);
   if (!setting.isNull()) return setting;
@@ -98,6 +113,10 @@ void Settings::_buildCache() {
       _cache.wt = json["Settings"][i]["value"].as<String>();
     else if (strcmp(name, WDG_KEY_NAME) == 0)
       _cache.wdg_key = json["Settings"][i]["value"].as<String>();
+    else if (strcmp(name, TRIGGER_SSID_NAME) == 0)
+      _cache.trigger_ssid = json["Settings"][i]["value"].as<String>();
+    else if (strcmp(name, TRIGGER_PASS_NAME) == 0)
+      _cache.trigger_pass = json["Settings"][i]["value"].as<String>();
   }
 }
 
@@ -149,6 +168,10 @@ bool Settings::begin() {
     ensureGeofenceSetting(jsonBuffer);
     settings_changed = true;
   }
+  if (ensureEmptyStringSetting(jsonBuffer, TRIGGER_SSID_NAME))
+    settings_changed = true;
+  if (ensureEmptyStringSetting(jsonBuffer, TRIGGER_PASS_NAME))
+    settings_changed = true;
 
   // One-time, backward-compatible migration of the previous single profile.
   JsonArray saved_wifi = saved_wifi_setting["value"].as<JsonArray>();
@@ -226,6 +249,10 @@ template <> String Settings::loadSetting<String>(const char* key) {
     return _cache.wt;
   if (strcmp(key, WDG_KEY_NAME) == 0)
     return _cache.wdg_key;
+  if (strcmp(key, TRIGGER_SSID_NAME) == 0)
+    return _cache.trigger_ssid;
+  if (strcmp(key, TRIGGER_PASS_NAME) == 0)
+    return _cache.trigger_pass;
 
   // Unknown String key: fall back to JSON so the setting can be auto-created.
   DynamicJsonDocument json(JSON_SETTING_SIZE);
@@ -424,6 +451,10 @@ template <> bool Settings::saveSetting<bool>(const char* key, String value) {
         _cache.wt = value;
       else if (strcmp(key, WDG_KEY_NAME) == 0)
         _cache.wdg_key = value;
+      else if (strcmp(key, TRIGGER_SSID_NAME) == 0)
+        _cache.trigger_ssid = value;
+      else if (strcmp(key, TRIGGER_PASS_NAME) == 0)
+        _cache.trigger_pass = value;
 
       this->printJsonSettings(settings_string);
 
@@ -606,6 +637,18 @@ bool Settings::createDefaultSettings(fs::FS &fs, bool spec, uint8_t index, const
     jsonBuffer["Settings"][12].createNestedArray("value");
     jsonBuffer["Settings"][12]["range"]["min"] = 0;
     jsonBuffer["Settings"][12]["range"]["max"] = MAX_GEOFENCES;
+
+    jsonBuffer["Settings"][13]["name"] = TRIGGER_SSID_NAME;
+    jsonBuffer["Settings"][13]["type"] = "String";
+    jsonBuffer["Settings"][13]["value"] = "";
+    jsonBuffer["Settings"][13]["range"]["min"] = "";
+    jsonBuffer["Settings"][13]["range"]["max"] = "";
+
+    jsonBuffer["Settings"][14]["name"] = TRIGGER_PASS_NAME;
+    jsonBuffer["Settings"][14]["type"] = "String";
+    jsonBuffer["Settings"][14]["value"] = "";
+    jsonBuffer["Settings"][14]["range"]["min"] = "";
+    jsonBuffer["Settings"][14]["range"]["max"] = "";
 
     serializeJson(jsonBuffer, settingsFile);
     serializeJson(jsonBuffer, settings_string);

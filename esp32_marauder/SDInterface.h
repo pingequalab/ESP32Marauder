@@ -72,6 +72,7 @@ class SDInterface {
 
     LinkedList<String>* sd_files;
 
+    bool collectWardriveLogs();
     void listDir(String str_dir);
     void listDirToLinkedList(LinkedList<String>* file_names, String str_dir = "/", String ext = "");
     bool listDirectory(String path, LinkedList<SDDirectoryEntry>* entries);

@@ -40,6 +40,24 @@ Fork 停在官方 `MARAUDER_C5`。不要新建 Scout Lite 板型宏来搬别的�
 9. 自动化由事件驱动。除通道 A 外，不要再排重复轮询的定时任务，也不安排无条件的全仓库复查。Colin 在 2026-10-15 只批准通道 A：`.github/workflows/scout-lite-upstream-tag.yml` 每天一次，对照仓库里已处理的稳定 tag。tag 没变就安静结束，不启动 AI。tag 变了就只开一个 GitHub issue 然后停止。同一 tag 不开第二个。这个 workflow 不打开固件 PR，不合并，不编译固件，不发布，不刷机。
 10. 区分源码存在、构建已打开、自动化测试通过、Scout Lite 实机已核实。在有证据改掉之前，沿用官方构建流程和工具链。不要假设不同 C5 硬件目标的二进制可以互相刷写。
 11. 只做合法、已授权的无线研究或测试。不提交密钥、WiGLE API key、生产凭据或原始私人 wardriving 数据。保留构建产物和发布溯源（SHA、工具链、分区、测试结果）。不要把 bin 提交进 git，也不要上传 GitHub Release。
+12. 设备显示，Colin 2026-10-16。标准 `info` 保持上游原有行结构，不另做一套版式。目标硬件行是下面这块；现在的 `MARAUDER_C5` 仍打印 `Hardware: ESP32-C5 DevKit`（`configs.h:122`，`WiFiScan.cpp:4918`）。本规则只记录目标原文，不在写这条规则的提交里改固件字符串。
+
+```
+Firmware: Marauder
+Version: v1.18.0
+Hardware:
+ Scout Lite (PINGEQUA)
+```
+
+SigRoam 设备页属于 SigRoam 应用，不是标准 Marauder 菜单。画面是 Flipper 128×64。GPS 和 SD 同一行。不把这页追加到 `info` 或 `gpsdata`。
+
+```
+PINGEQUA
+Scout Lite
+FW: 1.0.0
+Marauder: 1.18.0
+GPS: OK  SD: OK
+```
 
 ## 每次改动
 

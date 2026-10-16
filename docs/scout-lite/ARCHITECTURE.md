@@ -24,6 +24,29 @@ SigRoam 应用另外发送 `upload`（没有 `-d`）和 `uploadstatus`，并解�
 
 `info` 在标准固件里会进入 `SHOW_INFO`。SigRoam 应用自己对非 SigRoam 版本补发 `stopscan`。不改 `info` 去迁就这一步。
 
+## 设备显示
+
+Colin，2026-10-16。标准 Marauder CLI 保持原有 `info` 结构，不发明新版式。目标原文是：
+
+```
+Firmware: Marauder
+Version: v1.18.0
+Hardware:
+ Scout Lite (PINGEQUA)
+```
+
+当前固件仍打印上游硬件名 `Hardware: ESP32-C5 DevKit`（`esp32_marauder/configs.h:122`，`esp32_marauder/WiFiScan.cpp:4918`）。这一节只记录目标文字，不改固件字符串。
+
+SigRoam 设备页给 128×64 的 Flipper 屏，属于 SigRoam 应用，不是标准 Marauder 菜单。不追加到 `info` 或 `gpsdata`。GPS 和 SD 共用一行：
+
+```
+PINGEQUA
+Scout Lite
+FW: 1.0.0
+Marauder: 1.18.0
+GPS: OK  SD: OK
+```
+
 ## 现在的分层
 
 板型选择在 `esp32_marauder/configs.h`。默认的板型 `#define` 全是注释。CI 用编译参数 `-DMARAUDER_C5` 之类打开一个目标（`.github/workflows/build_parallel.yml:273`）。

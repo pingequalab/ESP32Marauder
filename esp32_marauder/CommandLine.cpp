@@ -689,26 +689,46 @@ void CommandLine::runCommand(String input) {
         upload_dest = BOTH_UPLOAD;
 
       if (upload_dest > -1) {
+        const uint8_t mode_before_upload = wifi_scan_obj.currentScanMode;
         if (!wifi_scan_obj.joinSavedWiFi(false)) {
           Serial.println(F("Failed to connect to saved WiFi"));
           return;
         }
         delay(1000);
+        bool upload_failed = false;
         for (int i = 0; i < sd_obj.sd_files->size(); i++) {
           if (sd_obj.sd_files->get(i).startsWith("wardrive_") || sd_obj.sd_files->get(i).startsWith("wigle-")) {
             if (!sd_obj.sd_files->get(i).endsWith(".wigle") && !sd_obj.sd_files->get(i).endsWith(".wdg") && !sd_obj.sd_files->get(i).endsWith(".gpx")) {
               Serial.println("Uploading " + sd_obj.sd_files->get(i) + "...");
-              if (wifi_scan_obj.uploadFile("/" + sd_obj.sd_files->get(i), true, upload_dest)) {
+              bool uploaded = false;
+              // Three tries total. This loop is not uploadFile's retry flag.
+              // false honors an existing .wigle/.wdg sidecar. No force-reupload flag exists.
+              for (uint8_t attempt = 0; attempt < 3; attempt++) {
+                if (attempt > 0) {
+                  Serial.print(F("Upload attempt "));
+                  Serial.print(attempt + 1);
+                  Serial.print(F(" of 3: "));
+                  Serial.println(sd_obj.sd_files->get(i));
+                }
+                uploaded = wifi_scan_obj.uploadFile("/" + sd_obj.sd_files->get(i), false, upload_dest);
+                if (uploaded)
+                  break;
+              }
+              if (uploaded) {
                 Serial.println("Upload OK");
               } else {
                 Serial.println("WiGLE failed");
+                upload_failed = true;
               }
             }
           }
         }
         WiFi.disconnect(true);
         delay(100);
-        wifi_scan_obj.StartScan(WIFI_SCAN_OFF, TFT_RED);
+        if (!upload_failed && mode_before_upload == WIFI_SCAN_WAR_DRIVE)
+          this->startScanFromCLI(WIFI_SCAN_WAR_DRIVE, TFT_GREEN, "Wardrive");
+        else
+          wifi_scan_obj.StartScan(WIFI_SCAN_OFF, TFT_RED);
 
         Serial.println("Upload complete");
       }

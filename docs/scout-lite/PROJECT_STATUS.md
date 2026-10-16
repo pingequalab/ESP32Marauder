@@ -80,8 +80,8 @@ GPS 接到 Flipper pin 15 和 16，不是官方 GPIO13/14。已记录。2026-10-
 2026-10-15 的任务 2 是「有 FAP 清单再做 SigRoam 合约测试」。2026-10-16 起该项超出范围。本仓库没有 FAP 的证据仍留在第 3 节。
 
 1. 不为已对齐的 SD/GPS 宏改固件。实机仍不是 `CONFIRMED_WORKING`。依赖：实机日志。不适合上游 PR。不打开功能移植 PR。
-2. 已核对的行为缺口是：`upload` 的 `retry=true` 让 sidecar 不生效；上传后停在 `WIFI_SCAN_OFF`；没有失败重试循环；没有 Dock、wardrive Web UI、SSID 排除表。本轮不改这些函数。Node/Core 与 ESP-NOW 在 Wardriver `v2.3.2` 源码里，超出范围，不设计。SigRoam 仍超出范围。依赖：`CODE_GAP.md`、`MINIMAL_CHANGE_PLAN.md` 第 1b 节。不适合上游 PR。
-3. `HAS_PSRAM` 保持注释，直到有运行时容量。需要屏、按键或 Flipper 下载控制的代码不移植。内部 beta 仍是未修改的 `MARAUDER_C5`，不提交 bin，不上传 Release，不刷机。
+2. Phase 1 已进 CLI `upload`：sidecar 跳过、仅当上传前正在 wardrive 且没有失败文件时回到 wardrive、单文件再试 2 次。Phase 2 不做：SSID 排除、无屏删日志、`save_mac` 在无 fix 时占住 MAC（`WiFiScan.cpp:6324`）。Phase 3 不做：有限 Dock 触发，不搬 `runDockMode()`。不做扫描器重写、Node/Core、ESP-NOW、SigRoam、屏幕 UI。依赖：`MINIMAL_CHANGE_PLAN.md` 第 1b 节。不适合整段上游 PR。
+3. `HAS_PSRAM` 保持注释，直到有运行时容量。需要屏、按键或 Flipper 下载控制的代码不移植。Phase 1 的 C5 构建记录见 `INTERNAL_BETA.md`。不提交 bin，不上传 Release，不刷机。
 
 ## 6. Decision Pending
 
@@ -106,7 +106,8 @@ GPS 接到 Flipper pin 15 和 16，不是官方 GPIO13/14。已记录。2026-10-
 | 2026-10-16 | 章程 PR 已在 `master` | [PR #2](https://github.com/pingequalab/ESP32Marauder/pull/2)，合并 `f4bc76727e7f29b7ca64da9c972c9103523c6006`。固件相对 `d3ceb28` 只多了文档和 CI yml，没有功能宏改动 | 该合并里的状态文件当时仍写章程未合并。本节更正这一点 |
 | 2026-10-16 | 范围改为最全官方功能的最小移植，SigRoam 超出范围 | `FEATURE_MATRIX.md`、`MINIMAL_CHANGE_PLAN.md`、章程更正节。没有 `可最小打开` 行。未改固件 | 不发版，不刷机 |
 | 2026-10-16 | 内部 beta：重编未修改的 `MARAUDER_C5` | 编译 commit `8b73c1905e810771da7f97fac63e89b2f5d9c1b3`。退出码 0。app bin SHA256 `e8c5b57f16745a2bcfbd5e8752fa68301345262cb4f6578556ae1b6316a681f0`。命令在 `INTERNAL_BETA.md`。bin 未提交，未上传 Release，未刷机 | 不是 Scout Lite 功能移植。不是客户固件 |
-| 2026-10-16 | 函数级差距，只收核对过的点 | `CODE_GAP.md`。Wardriver 对照 tag `v2.3.2` `35b3c1b`，未拷进仓库。研究报告里的「可以直接刷」、`scan_dwell`、`UploadWigle.cpp`、无 Fix 写入 SD，都没有写成事实。章程未加入这些句子 | 本轮不改固件。不刷机。不合并 |
+| 2026-10-16 | 函数级差距，只收核对过的点 | `CODE_GAP.md`。Wardriver 对照 tag `v2.3.2` `35b3c1b`，未拷进仓库。研究报告里的「可以直接刷」、`scan_dwell`、`UploadWigle.cpp`、无 Fix 写入 SD，都没有写成事实。章程未加入这些句子 | 随后只做 Phase 1 |
+| 2026-10-16 | Phase 1：sidecar、有条件恢复 wardrive、单文件再试 2 次 | `CommandLine.cpp` 的 `upload`。不改频道表。屏幕菜单仍传 `retry=true`。Phase 2/3 未做 | 构建记录补进 `INTERNAL_BETA.md`。不刷机。不合并 |
 
 ## 8. 最近一次同步摘要
 

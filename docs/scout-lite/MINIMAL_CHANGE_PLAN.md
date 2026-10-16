@@ -13,16 +13,21 @@
 - 不要复制：任何其他 C5 目标的整段 feature block、屏驱、`User_Setup_*.h`、分区 CSV。
 - 怎么测：用 `.github/workflows/scout-lite-ci.yml` 的同一 FQBN 重编未修改的 `MARAUDER_C5`。记录在 `INTERNAL_BETA.md`。不刷机。
 
-## 1b. 已核对的行为缺口
+## 1b. 阶段
 
-证据和行号在 `CODE_GAP.md`。这里只保留以后如果改代码时的顺序。每一项现在都不做。
+证据在 `CODE_GAP.md`。不改 `executeWarDrive()` 的频道表。
 
-1. `upload` 传入 `retry=true`（`CommandLine.cpp:701`），`uploadFile()` 因此不看已经写好的 `.wigle` / `.wdg`。以后若要跳过已成功的文件，只改这个布尔，不新写 HTTP 客户端，不复制 Wardriver 的 `uploadAllPending()`。怎么测：同一 FQBN 编译。不刷机。实机要等有 SD 日志时看 sidecar 已在时是否跳过。
-2. 上传结束后是 `StartScan(WIFI_SCAN_OFF)`（`CommandLine.cpp:711`），不会回到 `WIFI_SCAN_WAR_DRIVE`。以后若要恢复扫描，只重新进入现有的 wardrive 模式。不复制 `departDock()`，不做 Dock 状态机。
-3. `wigleUpload()` / `wdgwarsUpload()` 失败就返回。没有对同一文件的重试循环。不在本轮加状态机。
-4. 下面这些在本树里没有对应函数：Dock 触发 SSID、wardrive Web UI、SSID 排除表、`SOLO_MODE`、日志 HTTP 下载。不把 `ESP32DualBandWardriver` 的源码拷进本仓库。无屏的 C5 只有 CLI `ls`，删除日志在 `HAS_SCREEN` 的菜单里。
-5. Node/Core 和 ESP-NOW 在 Wardriver tag `v2.3.2` 里存在。截图写「无」与该 tag 不符。不设计、不移植。
-6. 无 Fix 时两边都不把行写入 SD。不另做一套「写入 No Fix」规则。日志序号文件两边都有，不把「按大小分卷」写成已有缺口里必须补的函数。
+Phase 1，本提交：
+
+- 无屏 CLI `upload` 调用 `uploadFile(..., false, ...)`，已有 `.wigle` / `.wdg` 就跳过。没有强制重传开关，不加新命令。`MenuFunctions.cpp` 仍传 `true`，`HAS_SCREEN` 包住，`MARAUDER_C5` 不编。
+- `joinSavedWiFi()` 之前记住 `currentScanMode`。每个文件都成功，且之前是 `WIFI_SCAN_WAR_DRIVE`，才 `startScanFromCLI(WIFI_SCAN_WAR_DRIVE)`。否则 `StartScan(WIFI_SCAN_OFF)`。有文件失败就不恢复。
+- 同一个文件失败后再试 2 次，一共 3 次，然后下一个文件。这不是 `retry` 参数。
+
+Phase 2，现在不做：SSID 排除表；无屏删除日志的 CLI；无 fix 时已 `save_mac()`（`WiFiScan.cpp:6324`，旁路 `9232`），之后有 fix 也不会再记该 MAC。
+
+Phase 3，现在不做：有限次的 Dock 触发连接。不搬整段 `runDockMode()`。
+
+不做：重写扫描器、Node/Core、ESP-NOW、SigRoam、屏幕 UI。
 
 ## 2. `HAS_PSRAM`：现在不打开
 

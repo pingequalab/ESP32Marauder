@@ -152,6 +152,12 @@
 
 每项本地修改必须记录：`Patch-ID、原因、受影响文件、上游可用性、上游 PR 地址、测试、维护负责人/AI 任务、删除本地补丁的条件`。若上游合入等效修复，后续同步应清理重复补丁。
 
+### 6.5 固件身份
+
+品牌字符串只放在 `esp32_marauder/PingequaIdentity.h`。契约、兼容矩阵和测试在 `docs/scout-lite/FIRMWARE_IDENTITY.md`。
+
+`Firmware: Marauder`、标准 `Version:` 行和 `HARDWARE_NAME` 保持上游原文。PINGEQUA 版本从 `0.1.0` 单独计数，落档时未发布，不代替 `MARAUDER_VERSION`。SigRoam 以后只从独立命令读额外能力，不从 `Version:` 推断。本条不改现有 CLI 回包。
+
 ## 7. 与 Koko 上游的协作策略
 
 - 通用修复优先提出小型、独立、可以复现的问题，提交 upstream Issue/PR；遵守贡献规范和第三方依赖许可。

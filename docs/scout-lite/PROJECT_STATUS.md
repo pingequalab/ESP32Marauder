@@ -107,7 +107,7 @@ GPS 接到 Flipper pin 15 和 16，不是官方 GPIO13/14。已记录。2026-10-
 | 2026-10-16 | 范围改为最全官方功能的最小移植，SigRoam 超出范围 | `FEATURE_MATRIX.md`、`MINIMAL_CHANGE_PLAN.md`、章程更正节。没有 `可最小打开` 行。未改固件 | 不发版，不刷机 |
 | 2026-10-16 | 内部 beta：重编未修改的 `MARAUDER_C5` | 编译 commit `8b73c1905e810771da7f97fac63e89b2f5d9c1b3`。退出码 0。app bin SHA256 `e8c5b57f16745a2bcfbd5e8752fa68301345262cb4f6578556ae1b6316a681f0`。命令在 `INTERNAL_BETA.md`。bin 未提交，未上传 Release，未刷机 | 不是 Scout Lite 功能移植。不是客户固件 |
 | 2026-10-16 | 函数级差距，只收核对过的点 | `CODE_GAP.md`。Wardriver 对照 tag `v2.3.2` `35b3c1b`，未拷进仓库。研究报告里的「可以直接刷」、`scan_dwell`、`UploadWigle.cpp`、无 Fix 写入 SD，都没有写成事实。章程未加入这些句子 | 随后只做 Phase 1 |
-| 2026-10-16 | Phase 1：sidecar、有条件恢复 wardrive、单文件再试 2 次 | `CommandLine.cpp` 的 `upload`。不改频道表。屏幕菜单仍传 `retry=true`。Phase 2/3 未做 | 构建记录补进 `INTERNAL_BETA.md`。不刷机。不合并 |
+| 2026-10-16 | Phase 1：sidecar、有条件恢复 wardrive、单文件再试 2 次 | 编译 commit `cf1da663fea6fef21f9c06c8efc8419943c9137e`。退出码 0。app bin SHA256 `37cc863b6112328ff571c56cd1f62e67bf50d4537fa5d95b9beac0e07703be10`。命令在 `INTERNAL_BETA.md`。不改频道表。屏幕菜单仍传 `retry=true`。Phase 2/3 未做 | bin 未提交。未刷机。不合并 |
 
 ## 8. 最近一次同步摘要
 

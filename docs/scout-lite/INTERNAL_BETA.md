@@ -54,8 +54,24 @@ e8c5b57f16745a2bcfbd5e8752fa68301345262cb4f6578556ae1b6316a681f0
 
 ## 不是这些东西
 
-- 不是 Scout Lite 功能移植
+- 上面那一节不是 Scout Lite 功能移植
 - 不是客户固件
 - 没有刷进任何板
 - 没有 GitHub Release
 - `HAS_PSRAM` 仍然是注释。FQBN 的 `PSRAM=enabled` 只带来 `BOARD_HAS_PSRAM`
+
+## Phase 1 构建
+
+日期：2026-10-16。编译时 HEAD 是 `cf1da663fea6fef21f9c06c8efc8419943c9137e`。这一笔改了 CLI `upload`：sidecar 用 `retry=false`，单文件失败后再试 2 次，只有上传前正在 `WIFI_SCAN_WAR_DRIVE` 且没有失败文件才回到 wardrive。没有改 `executeWarDrive()` 的频道表。没有 Dock、Web UI、SSID 排除、Node/Core、ESP-NOW、SigRoam。
+
+命令与上面相同。开始 `2026-10-16T01:17:35Z`，结束 `2026-10-16T01:17:43Z`，退出码 0。
+
+Arduino 输出：Sketch uses 1873920 bytes (56%) of program storage space. Maximum is 3342336 bytes.
+
+app bin：`/tmp/c5-build-feature-gap/esp32_marauder.ino.bin`，磁盘长度 1874032 字节。
+
+```
+37cc863b6112328ff571c56cd1f62e67bf50d4537fa5d95b9beac0e07703be10
+```
+
+`build.options.json` 的 fqbn 仍是 `esp32:esp32:esp32c5:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=enabled`，`compiler.cpp.extra_flags=-DMARAUDER_C5`。bin 未提交，未上传 Release，未刷机。上面未改宏的 SHA256 仍然有效，它不是这一笔。

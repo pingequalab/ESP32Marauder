@@ -4,7 +4,7 @@
 
 本轮不改固件，不实现下面任何一项，不刷机，不发版。
 
-结论：对照 `FEATURE_MATRIX.md` 之后，没有 `可最小打开` 项。Scout Lite 已确认能用的官方功能，已经由 `MARAUDER_C5` 的宏打开，而且 SD/GPS 脚与原理图一致。以后如果改代码，只按下面的顺序。每一项都写明现在为什么不动。
+结论：板级宏表里仍然没有「硬件已经证实、改一行宏就能打开」的项。函数级对照在 `CODE_GAP.md`。下面第 1b 节只列已经在源码里对上的缺口。本轮不改这些函数。SigRoam 仍超出范围。不把研究报告里的「可以直接刷」或未核对 GPIO 写进章程。
 
 ## 1. 继续使用官方 `MARAUDER_C5`
 
@@ -12,6 +12,17 @@
 - 硬件：SD IO2/IO6/IO7/IO10 与 `SD_CS 10`、`SD_MISO 2`、`SD_MOSI 7`、`SD_SCK 6`（`configs.h:2706-2707`、`3212-3215`）一致。GPS GPIO14 RX / GPIO13 TX 与 `GPS_TX 14`、`GPS_RX 13`（`2975-2978`）一致。原理图确认，实机未测。
 - 不要复制：任何其他 C5 目标的整段 feature block、屏驱、`User_Setup_*.h`、分区 CSV。
 - 怎么测：用 `.github/workflows/scout-lite-ci.yml` 的同一 FQBN 重编未修改的 `MARAUDER_C5`。记录在 `INTERNAL_BETA.md`。不刷机。
+
+## 1b. 已核对的行为缺口
+
+证据和行号在 `CODE_GAP.md`。这里只保留以后如果改代码时的顺序。每一项现在都不做。
+
+1. `upload` 传入 `retry=true`（`CommandLine.cpp:701`），`uploadFile()` 因此不看已经写好的 `.wigle` / `.wdg`。以后若要跳过已成功的文件，只改这个布尔，不新写 HTTP 客户端，不复制 Wardriver 的 `uploadAllPending()`。怎么测：同一 FQBN 编译。不刷机。实机要等有 SD 日志时看 sidecar 已在时是否跳过。
+2. 上传结束后是 `StartScan(WIFI_SCAN_OFF)`（`CommandLine.cpp:711`），不会回到 `WIFI_SCAN_WAR_DRIVE`。以后若要恢复扫描，只重新进入现有的 wardrive 模式。不复制 `departDock()`，不做 Dock 状态机。
+3. `wigleUpload()` / `wdgwarsUpload()` 失败就返回。没有对同一文件的重试循环。不在本轮加状态机。
+4. 下面这些在本树里没有对应函数：Dock 触发 SSID、wardrive Web UI、SSID 排除表、`SOLO_MODE`、日志 HTTP 下载。不把 `ESP32DualBandWardriver` 的源码拷进本仓库。无屏的 C5 只有 CLI `ls`，删除日志在 `HAS_SCREEN` 的菜单里。
+5. Node/Core 和 ESP-NOW 在 Wardriver tag `v2.3.2` 里存在。截图写「无」与该 tag 不符。不设计、不移植。
+6. 无 Fix 时两边都不把行写入 SD。不另做一套「写入 No Fix」规则。日志序号文件两边都有，不把「按大小分卷」写成已有缺口里必须补的函数。
 
 ## 2. `HAS_PSRAM`：现在不打开
 

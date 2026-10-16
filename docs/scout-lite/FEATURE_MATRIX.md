@@ -2,6 +2,8 @@
 
 日期：2026-10-16。源码 commit：`f4bc76727e7f29b7ca64da9c972c9103523c6006`。
 
+函数级行为在 `docs/scout-lite/CODE_GAP.md`。本表只保留板级宏差异，不把「宏开着」写成功能已经按那个行为工作。
+
 只比较本树里这些官方 C5 目标：`MARAUDER_V8`、`MARAUDER_MINI_V3`、`MARAUDER_PANCAKE`、`XIAO_ESP32_C5`、`MARAUDER_T_DONGLE_C5`、`MARAUDER_POOM`。`DUAL_MINI_C5` 只是再定义 `MARAUDER_MINI_V3`（`esp32_marauder/configs.h:144-146`），不单列成一套功能。
 
 一行一个与 `MARAUDER_C5` 不同的官方功能。下面这些宏在列出的六个目标上和 `MARAUDER_C5` 一样，都是打开的，所以没有单独的行：`HAS_BT`（`configs.h:533`）、`HAS_DUAL_BAND`（`542`）、`HAS_NIMBLE_2`（`545`）、`HAS_IDF_3`（`546`）。

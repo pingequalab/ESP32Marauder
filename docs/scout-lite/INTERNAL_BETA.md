@@ -107,3 +107,31 @@ f17d12826d2f2e676e9fc356199bf7b5b56ebaa4fe1328b5401f813f705ab041
 ```
 
 bin 未提交，未上传 Release，未刷机。
+
+## 去掉触发 SSID，只留 Flipper 已有 upload
+
+日期：2026-10-16。编译时 HEAD 是 `5b75787bcc96ff8e2bb1f1e49b11fc8707291b12`。删掉 `t_ssid`、`t_pass`、`/t_ssid.txt`、`/t_pass.txt`、3 次连接循环和 30 秒离开检查。没有新命令，没有新的串口句子。`upload -d wigle|wdg|both` 仍用 `collectWardriveLogs()`。全部成功且上传前是 `WIFI_SCAN_WAR_DRIVE` 时走 `startScanFromCLI`。`[BUF/BEGIN]` / `[BUF/CLOSE]` 未改。
+
+同一条命令：
+
+```
+/tmp/bin/arduino-cli compile \
+  --fqbn esp32:esp32:esp32c5:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=enabled \
+  --libraries /tmp/marauder-libs \
+  --build-property compiler.cpp.extra_flags=-DMARAUDER_C5 \
+  --warnings none \
+  --build-path /tmp/c5-build-feature-gap \
+  /tmp/scout-lite-worktrees/feature-gap/esp32_marauder
+```
+
+开始 `2026-10-16T03:13:41Z`，结束 `2026-10-16T03:13:59Z`，退出码 0。
+
+Arduino 输出：Sketch uses 1874764 bytes (56%) of program storage space. Maximum is 3342336 bytes.
+
+app bin：`/tmp/c5-build-feature-gap/esp32_marauder.ino.bin`，磁盘长度 1874864 字节。`sketch/WiFiScan.cpp.o` 与 `sketch/settings.cpp.o` 在这次编译里重新生成。
+
+```
+45e6c5976a8b034344cac5eb867e5853f1808d8899934bf29d6ca608325241c9
+```
+
+bin 未提交，未上传 Release，未刷机。上一节 SHA256 含触发 SSID，不是这一笔。

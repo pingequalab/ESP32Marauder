@@ -109,12 +109,13 @@ GPS 接到 Flipper pin 15 和 16，不是官方 GPIO13/14。已记录。2026-10-
 | 2026-10-16 | 函数级差距，只收核对过的点 | `CODE_GAP.md`。Wardriver 对照 tag `v2.3.2` `35b3c1b`，未拷进仓库。研究报告里的「可以直接刷」、`scan_dwell`、`UploadWigle.cpp`、无 Fix 写入 SD，都没有写成事实。章程未加入这些句子 | 随后只做 Phase 1 |
 | 2026-10-16 | Phase 1：sidecar、有条件恢复 wardrive、单文件再试 2 次 | 编译 commit `cf1da663fea6fef21f9c06c8efc8419943c9137e`。退出码 0。app bin SHA256 `37cc863b6112328ff571c56cd1f62e67bf50d4537fa5d95b9beac0e07703be10`。命令在 `INTERNAL_BETA.md`。不改频道表。屏幕菜单仍传 `retry=true`。Phase 2/3 未做 | bin 未提交。未刷机。不合并 |
 | 2026-10-16 | 无 fix 不占 MAC | 编译 commit `b376eb64e20ec51fe3587205f01cc504a898f489`。退出码 0。app bin SHA256 `9005e18a9d563b9cd62c415e0b8f5837d7bab8beb5300e76ce5dab0d746fa4f2`。三条写入路径都是 `append` 之后才 `save_mac()` | bin 未提交。未刷机。不合并。SSID 排除、删除 CLI、PSRAM 没做 |
-| 2026-10-16 | 无屏日志列表和单 SSID 触发上传 | 编译 commit `1e6a5572a6295695f30b6026d4a5f45255c821dc`。退出码 0。app bin SHA256 `f17d12826d2f2e676e9fc356199bf7b5b56ebaa4fe1328b5401f813f705ab041`。设置键 `t_ssid` / `t_pass`。回复仍是原有串口句子 | bin 未提交。未刷机。不合并。没有网页 |
+| 2026-10-16 | 无屏日志列表和单 SSID 触发上传 | 编译 commit `1e6a5572a6295695f30b6026d4a5f45255c821dc`。退出码 0。app bin SHA256 `f17d12826d2f2e676e9fc356199bf7b5b56ebaa4fe1328b5401f813f705ab041`。设置键 `t_ssid` / `t_pass`。回复仍是原有串口句子 | 下一行已删掉触发 SSID。bin 未提交。未刷机。不合并 |
+| 2026-10-16 | 删掉触发 SSID，只留 Flipper 已有 `upload` | 编译 commit `5b75787bcc96ff8e2bb1f1e49b11fc8707291b12`。退出码 0。app bin SHA256 `45e6c5976a8b034344cac5eb867e5853f1808d8899934bf29d6ca608325241c9`。命令在 `INTERNAL_BETA.md`。无屏仍收集 `wardrive_` / `wigle-`。回复仍是原有串口句子 | bin 未提交。未刷机。不合并 |
 
 ## 8. 最近一次同步摘要
 
 - 上游版本：源码版本字符串 `v1.18.0`。tag `v1.18.0`（`b2b9f92382eb60b39b8741be3b567e416cdbe672`）比 `d3ceb28afeda1196ca27c13adeaa69ada52383f3` 落后 10 commits。
-- 新增功能及受影响模块：无固件改动。另加一个每日 tag workflow。该 workflow 不编译固件。
+- 新增功能及受影响模块：`5b75787` 删掉触发 SSID。无屏 `upload -d` 仍收集 `wardrive_` / `wigle-`。每日 tag workflow 不编译固件。
 - 自动测试：PR #1 在 `b242f00` 上 `Firmware Unit Tests` / `Native Unity tests`、`Scout Lite CI` / `Native Unity tests`、`Compile MARAUDER_C5` 为 SUCCESS。通道 A 不在 pull request 上跑。GitHub 的 schedule 只从默认分支 `master` 触发。
 - 实机验证：无。未刷机。
 - 是否允许稳定版发布：否。没有客户稳定固件。Colin 在 2026-10-15 批准的是当时的文档 PR 在 required CI 为绿后可合入 `master`。该章程 PR 已合并为 `f4bc767`。这次范围更正不是固件发布。Agent 不合并，不刷机。

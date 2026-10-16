@@ -91,3 +91,19 @@ app bin 仍是 `/tmp/c5-build-feature-gap/esp32_marauder.ino.bin`，磁盘长度
 ```
 
 bin 未提交，未上传 Release，未刷机。Phase 1 的 SHA256 是上一节，不是这一笔。
+
+## 无屏上传和触发 SSID
+
+日期：2026-10-16。编译时 HEAD 是 `1e6a5572a6295695f30b6026d4a5f45255c821dc`。无屏 `upload` 用 `collectWardriveLogs()` 填 `wardrive_` / `wigle-`。触发 SSID 是已有设置键 `t_ssid` / `t_pass`。没有新命令，没有新的串口句子。没有网页、Node/Core、ESP-NOW、扫描器重写、SigRoam。
+
+同一条命令。开始 `2026-10-16T02:27:52Z`，结束 `2026-10-16T02:28:10Z`，退出码 0。
+
+Arduino 输出：Sketch uses 1877248 bytes (56%) of program storage space. Maximum is 3342336 bytes.
+
+app bin：`/tmp/c5-build-feature-gap/esp32_marauder.ino.bin`，磁盘长度 1877360 字节。
+
+```
+f17d12826d2f2e676e9fc356199bf7b5b56ebaa4fe1328b5401f813f705ab041
+```
+
+bin 未提交，未上传 Release，未刷机。

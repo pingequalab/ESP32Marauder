@@ -108,7 +108,8 @@ GPS 接到 Flipper pin 15 和 16，不是官方 GPIO13/14。已记录。2026-10-
 | 2026-10-16 | 内部 beta：重编未修改的 `MARAUDER_C5` | 编译 commit `8b73c1905e810771da7f97fac63e89b2f5d9c1b3`。退出码 0。app bin SHA256 `e8c5b57f16745a2bcfbd5e8752fa68301345262cb4f6578556ae1b6316a681f0`。命令在 `INTERNAL_BETA.md`。bin 未提交，未上传 Release，未刷机 | 不是 Scout Lite 功能移植。不是客户固件 |
 | 2026-10-16 | 函数级差距，只收核对过的点 | `CODE_GAP.md`。Wardriver 对照 tag `v2.3.2` `35b3c1b`，未拷进仓库。研究报告里的「可以直接刷」、`scan_dwell`、`UploadWigle.cpp`、无 Fix 写入 SD，都没有写成事实。章程未加入这些句子 | 随后只做 Phase 1 |
 | 2026-10-16 | Phase 1：sidecar、有条件恢复 wardrive、单文件再试 2 次 | 编译 commit `cf1da663fea6fef21f9c06c8efc8419943c9137e`。退出码 0。app bin SHA256 `37cc863b6112328ff571c56cd1f62e67bf50d4537fa5d95b9beac0e07703be10`。命令在 `INTERNAL_BETA.md`。不改频道表。屏幕菜单仍传 `retry=true`。Phase 2/3 未做 | bin 未提交。未刷机。不合并 |
-| 2026-10-16 | 无 fix 不占 MAC | 编译 commit `b376eb64e20ec51fe3587205f01cc504a898f489`。退出码 0。app bin SHA256 `9005e18a9d563b9cd62c415e0b8f5837d7bab8beb5300e76ce5dab0d746fa4f2`。三条写入路径都是 `append` 之后才 `save_mac()` | bin 未提交。未刷机。不合并。SSID 排除、Dock、删除 CLI、PSRAM 没做 |
+| 2026-10-16 | 无 fix 不占 MAC | 编译 commit `b376eb64e20ec51fe3587205f01cc504a898f489`。退出码 0。app bin SHA256 `9005e18a9d563b9cd62c415e0b8f5837d7bab8beb5300e76ce5dab0d746fa4f2`。三条写入路径都是 `append` 之后才 `save_mac()` | bin 未提交。未刷机。不合并。SSID 排除、删除 CLI、PSRAM 没做 |
+| 2026-10-16 | 无屏日志列表和单 SSID 触发上传 | 编译 commit `1e6a5572a6295695f30b6026d4a5f45255c821dc`。退出码 0。app bin SHA256 `f17d12826d2f2e676e9fc356199bf7b5b56ebaa4fe1328b5401f813f705ab041`。设置键 `t_ssid` / `t_pass`。回复仍是原有串口句子 | bin 未提交。未刷机。不合并。没有网页 |
 
 ## 8. 最近一次同步摘要
 

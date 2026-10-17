@@ -33,6 +33,18 @@ static JsonObject findGeofenceSetting(DynamicJsonDocument& json) {
   return JsonObject();
 }
 
+static bool dropSettingNamed(DynamicJsonDocument& json, const char* name) {
+  JsonArray settings = json["Settings"].as<JsonArray>();
+  bool dropped = false;
+  for (int i = (int)settings.size() - 1; i >= 0; i--) {
+    if (strcmp(settings[i]["name"] | "", name) == 0) {
+      settings.remove(i);
+      dropped = true;
+    }
+  }
+  return dropped;
+}
+
 static JsonObject ensureGeofenceSetting(DynamicJsonDocument& json) {
   JsonObject setting = findGeofenceSetting(json);
   if (!setting.isNull()) return setting;
@@ -149,6 +161,10 @@ bool Settings::begin() {
     ensureGeofenceSetting(jsonBuffer);
     settings_changed = true;
   }
+  if (dropSettingNamed(jsonBuffer, "t_ssid"))
+    settings_changed = true;
+  if (dropSettingNamed(jsonBuffer, "t_pass"))
+    settings_changed = true;
 
   // One-time, backward-compatible migration of the previous single profile.
   JsonArray saved_wifi = saved_wifi_setting["value"].as<JsonArray>();

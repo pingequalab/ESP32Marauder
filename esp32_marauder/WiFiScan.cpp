@@ -712,10 +712,10 @@ extern "C" {
                   String wardrive_line = (String)advertisedDevice->getAddress().toString().c_str() + ",,[BLE]," + gps_obj.getDatetime() + ",0," + (String)advertisedDevice->getRSSI() + "," + gps_obj.getLat() + "," + gps_obj.getLon() + "," + gps_obj.getAlt() + "," + gps_obj.getAccuracy() + ",BLE\n";
                   Serial.print(wardrive_line);
 
-                  if (do_save && !wifi_scan_obj.isGeofencePaused())
+                  if (do_save && !wifi_scan_obj.isGeofencePaused()) {
                     buffer_obj.append(wardrive_line);
-
-                  wifi_scan_obj.save_mac(mac_char);
+                    wifi_scan_obj.save_mac(mac_char);
+                  }
 
                   wifi_scan_obj.bt_frames++;
 
@@ -1492,10 +1492,10 @@ extern "C" {
                   String wardrive_line = (String)mac + ",,[BLE]," + gps_obj.getDatetime() + ",0," + (String)rssi + "," + gps_obj.getLat() + "," + gps_obj.getLon() + "," + gps_obj.getAlt() + "," + gps_obj.getAccuracy() + ",BLE\n";
                   Serial.print(wardrive_line);
 
-                  if (do_save && !wifi_scan_obj.isGeofencePaused())
+                  if (do_save && !wifi_scan_obj.isGeofencePaused()) {
                     buffer_obj.append(wardrive_line);
-                    
-                  wifi_scan_obj.save_mac(mac_char);
+                    wifi_scan_obj.save_mac(mac_char);
+                  }
 
                   #ifndef HAS_NIMBLE_2
                     uint8_t* payLoad = advertisedDevice->getPayload();
@@ -2741,6 +2741,12 @@ bool WiFiScan::scanning() {
 // Function to prepare to run a specific scan
 void WiFiScan::StartScan(uint8_t scan_mode, uint16_t color) {  
   this->initWiFi(scan_mode);
+  if (scan_mode == WIFI_SCAN_WAR_DRIVE) {
+    this->sig_session_on = true;
+    this->sig_session_start_ms = millis();
+  } else {
+    this->sig_session_on = false;
+  }
   if (scan_mode == WIFI_SCAN_OFF) {
     #ifdef HAS_ACT_LED
       digitalWrite(ACT_LED_PIN, LOW);
@@ -6321,8 +6327,6 @@ void WiFiScan::executeWarDrive() {
           if (this->seen_mac(this_bssid_raw))
             continue;
 
-          this->save_mac(this_bssid_raw);
-
           String ssid = WiFi.SSID(i);
           ssid.replace(",", "_");
 
@@ -6342,6 +6346,7 @@ void WiFiScan::executeWarDrive() {
 
           if (do_save) {
             buffer_obj.append(wardrive_line);
+            this->save_mac(this_bssid_raw);
           }
 
           this->beacon_frames++;
@@ -9229,9 +9234,7 @@ void WiFiScan::beaconSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type
         }
 
         if ((do_write) && (!wifi_scan_obj.seen_mac(src_addr))) {
-          wifi_scan_obj.save_mac(src_addr);
           #ifdef HAS_GPS
-            wifi_scan_obj.flock_devices++;
             String wardrive_line =
               macToString(src_addr) + "," +
               "Flock," +
@@ -9248,6 +9251,8 @@ void WiFiScan::beaconSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type
 
             if (gps_obj.getFixStatus() && !wifi_scan_obj.isGeofencePaused()) {
               buffer_obj.append(wardrive_line);
+              wifi_scan_obj.save_mac(src_addr);
+              wifi_scan_obj.flock_devices++;
             }
           #endif
         }
@@ -11838,6 +11843,176 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
     } else {
       Serial.println("[UPLOAD] Could not write sidecar: " + sidecarPath);
     }
+  }
+
+  static uint32_t countLogsMissingWigleSidecar() {
+    uint32_t pending = 0;
+    if (!sd_obj.supported)
+      return 0;
+    File dir = SD.open("/");
+    if (!dir || !dir.isDirectory()) {
+      dir.close();
+      return 0;
+    }
+    File entry = dir.openNextFile();
+    while (entry) {
+      if (!entry.isDirectory()) {
+        String name = entry.name();
+        int slash = name.lastIndexOf('/');
+        if (slash >= 0)
+          name = name.substring(slash + 1);
+        if ((name.startsWith("wardrive_") || name.startsWith("wigle-")) &&
+            !name.endsWith(".wigle") && !name.endsWith(".wdg") && !name.endsWith(".gpx") &&
+            !SD.exists("/" + name + ".wigle"))
+          pending++;
+      }
+      entry.close();
+      entry = dir.openNextFile();
+    }
+    dir.close();
+    return pending;
+  }
+
+  void WiFiScan::printSigRoamStatus() {
+    const bool scanning = this->currentScanMode == WIFI_SCAN_WAR_DRIVE && this->sig_session_on;
+    const uint8_t st = scanning ? 1 : 0;
+    uint32_t session_ms = 0;
+    if (scanning) {
+      session_ms = millis() - this->sig_session_start_ms;
+      if (session_ms == 0)
+        session_ms = 1;
+    }
+
+    uint32_t sats = 0;
+    uint32_t gga = 0;
+    uint32_t ggafix = 0;
+    #ifdef HAS_GPS
+      int sat_now = gps_obj.getNumSats();
+      if (sat_now > 0)
+        sats = (uint32_t)sat_now;
+      if (sats > 255)
+        sats = 255;
+      gga = gps_obj.getGgaCount();
+      ggafix = gps_obj.getGgaFixCount();
+    #endif
+    const uint8_t sd_up = sd_obj.supported ? 1 : 0;
+    #ifdef HAS_BT
+      const uint8_t ble_ok = 1;
+    #else
+      const uint8_t ble_ok = 0;
+    #endif
+    const uint32_t ap = this->beacon_frames;
+    const uint32_t ble = this->bt_frames > 0 ? (uint32_t)this->bt_frames : 0;
+
+    String wu = settings_obj.loadSetting<String>("wu");
+    String wt = settings_obj.loadSetting<String>("wt");
+    const uint8_t key = (wu.length() > 0 && wt.length() > 0) ? 1 : 0;
+    wu = "";
+    wt = "";
+    String ssid = "-";
+    uint8_t home = 0;
+    String saved_ssid;
+    String saved_pass;
+    if (settings_obj.loadSavedWifiCredential(0, saved_ssid, saved_pass) && saved_ssid.length() > 0) {
+      home = 1;
+      saved_ssid.replace("\r", " ");
+      saved_ssid.replace("\n", " ");
+      ssid = saved_ssid;
+    }
+    saved_pass = "";
+
+    Serial.print(F("Diag: st="));
+    Serial.print(st);
+    Serial.print(F(" seal=00 hb="));
+    Serial.print(sats);
+    Serial.print(F("/1/"));
+    Serial.print(st);
+    Serial.print(F("/0/"));
+    Serial.print(sd_up);
+    Serial.print(F("/"));
+    Serial.println(ble_ok);
+
+    Serial.print(F("Busy: st="));
+    Serial.print(st);
+    Serial.println(F(" seal=00"));
+
+    Serial.print(F("Sess: ap="));
+    Serial.print(ap);
+    Serial.print(F(" ble="));
+    Serial.print(ble);
+    Serial.print(F(" ms="));
+    Serial.print(session_ms);
+    Serial.println(F(" ih=0 ihmin=0 ps=0 psmin=0"));
+
+    Serial.print(F("Qual: gga="));
+    Serial.print(gga);
+    Serial.print(F(" ggafix="));
+    Serial.print(ggafix);
+    Serial.print(F(" drop=0 net="));
+    Serial.print(ap);
+    Serial.print(F(" sd="));
+    Serial.print(sd_up);
+    Serial.print(F(" sats="));
+    Serial.print(sats);
+    Serial.println(F(" topd=0"));
+
+    Serial.print(F("Radio: wifi=1 ble="));
+    Serial.println(ble_ok);
+
+    Serial.print(F("Up: up_q="));
+    Serial.print(countLogsMissingWigleSidecar());
+    Serial.println(F(" up_last_trans=- up_disc_gps=0 up_reason=-"));
+
+    Serial.println(F("Rank: rank=0 month=0 wifi_gps=0"));
+
+    Serial.print(F("Cfg: key="));
+    Serial.print(key);
+    Serial.print(F(" home="));
+    Serial.print(home);
+    Serial.print(F(" ssid="));
+    Serial.println(ssid);
+  }
+
+  WiFiScan::WardriveUploadResult WiFiScan::uploadWardriveLogs(uint8_t upload_type) {
+    WardriveUploadResult result;
+    if (!sd_obj.supported || !sd_obj.collectWardriveLogs() || sd_obj.sd_files == nullptr)
+      return result;
+
+    for (int i = 0; i < sd_obj.sd_files->size(); i++) {
+      String name = sd_obj.sd_files->get(i);
+      result.any_file = true;
+      bool wants_wigle = upload_type == WIGLE_UPLOAD || upload_type == BOTH_UPLOAD;
+      bool wants_wdg = upload_type == WDG_UPLOAD || upload_type == BOTH_UPLOAD;
+      bool wigle_done = !wants_wigle || this->sidecarExists("/" + name, "wigle");
+      bool wdg_done = !wants_wdg || this->sidecarExists("/" + name, "wdg");
+      if (wigle_done && wdg_done) {
+        if (this->uploadFile("/" + name, false, upload_type))
+          Serial.println(F("Upload OK"));
+        continue;
+      }
+
+      Serial.println("Uploading " + name + "...");
+      bool uploaded = false;
+      for (uint8_t attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) {
+          Serial.print(F("Upload attempt "));
+          Serial.print(attempt + 1);
+          Serial.print(F(" of 3: "));
+          Serial.println(name);
+        }
+        uploaded = this->uploadFile("/" + name, false, upload_type);
+        if (uploaded)
+          break;
+      }
+      if (uploaded) {
+        Serial.println(F("Upload OK"));
+        result.any_sent = true;
+      } else {
+        result.any_failed = true;
+        Serial.println(F("WiGLE failed"));
+      }
+    }
+    return result;
   }
 
   bool WiFiScan::uploadFile(String filePath, bool retry, uint8_t upload_type) {

@@ -308,6 +308,34 @@ bool SDInterface::migrateSPIFFS(uint8_t operation, size_t& files_copied, size_t&
 }
 // GCOVR_EXCL_STOP
 
+bool SDInterface::collectWardriveLogs() {
+  if (!this->supported)
+    return false;
+  if (this->sd_files == nullptr)
+    this->sd_files = new LinkedList<String>();
+  this->sd_files->clear();
+
+  File dir = SD.open("/");
+  if (!dir || !dir.isDirectory()) {
+    dir.close();
+    return true;
+  }
+
+  File entry = dir.openNextFile();
+  while (entry) {
+    if (!entry.isDirectory()) {
+      String name = entry.name();
+      if ((name.startsWith("wardrive_") || name.startsWith("wigle-")) &&
+          !name.endsWith(".wigle") && !name.endsWith(".wdg") && !name.endsWith(".gpx"))
+        this->sd_files->add(name);
+    }
+    entry.close();
+    entry = dir.openNextFile();
+  }
+  dir.close();
+  return true;
+}
+
 void SDInterface::listDirToLinkedList(LinkedList<String>* file_names, String str_dir, String ext) {
   if (this->supported) {
     File dir = SD.open(str_dir);

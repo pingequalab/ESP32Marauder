@@ -367,6 +367,12 @@ void CommandLine::runCommand(String input) {
     return;
   }
 
+  // SigRoam status only. The Marauder app menu never sends this word.
+  if (cmd_args.get(0) == SIGROAM_CMD) {
+    wifi_scan_obj.printSigRoamStatus();
+    return;
+  }
+
   // Stop Scan
   if (cmd_args.get(0) == STOPSCAN_CMD) {
     int f_arg = this->argSearch(&cmd_args, "-f");
@@ -689,28 +695,20 @@ void CommandLine::runCommand(String input) {
         upload_dest = BOTH_UPLOAD;
 
       if (upload_dest > -1) {
+        const uint8_t mode_before_upload = wifi_scan_obj.currentScanMode;
         if (!wifi_scan_obj.joinSavedWiFi(false)) {
           Serial.println(F("Failed to connect to saved WiFi"));
           return;
         }
         delay(1000);
-        for (int i = 0; i < sd_obj.sd_files->size(); i++) {
-          if (sd_obj.sd_files->get(i).startsWith("wardrive_") || sd_obj.sd_files->get(i).startsWith("wigle-")) {
-            if (!sd_obj.sd_files->get(i).endsWith(".wigle") && !sd_obj.sd_files->get(i).endsWith(".wdg") && !sd_obj.sd_files->get(i).endsWith(".gpx")) {
-              Serial.println("Uploading " + sd_obj.sd_files->get(i) + "...");
-              if (wifi_scan_obj.uploadFile("/" + sd_obj.sd_files->get(i), true, upload_dest)) {
-                Serial.println("Upload OK");
-              } else {
-                Serial.println("WiGLE failed");
-              }
-            }
-          }
-        }
+        WiFiScan::WardriveUploadResult result = wifi_scan_obj.uploadWardriveLogs(upload_dest);
         WiFi.disconnect(true);
         delay(100);
-        wifi_scan_obj.StartScan(WIFI_SCAN_OFF, TFT_RED);
-
-        Serial.println("Upload complete");
+        if (!result.any_failed && mode_before_upload == WIFI_SCAN_WAR_DRIVE)
+          this->startScanFromCLI(WIFI_SCAN_WAR_DRIVE, TFT_GREEN, "Wardrive");
+        else
+          wifi_scan_obj.StartScan(WIFI_SCAN_OFF, TFT_RED);
+        Serial.println(F("Upload complete"));
       }
     #else
       Serial.println("Direct upload not supported");

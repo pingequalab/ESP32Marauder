@@ -11973,6 +11973,21 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
     Serial.println(ssid);
   }
 
+void WiFiScan::printSigRoamMem() {
+  Serial.print(F("Mem: int_free="));
+  Serial.print(heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+  Serial.print(F(" int_min="));
+  Serial.print(heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL));
+  Serial.print(F(" int_blk="));
+  Serial.print(heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+  Serial.print(F(" ps_total="));
+  Serial.print(heap_caps_get_total_size(MALLOC_CAP_SPIRAM));
+  Serial.print(F(" ps_free="));
+  Serial.print(heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+  Serial.print(F(" ps_min="));
+  Serial.println(heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM));
+}
+
   WiFiScan::WardriveUploadResult WiFiScan::uploadWardriveLogs(uint8_t upload_type) {
     WardriveUploadResult result;
     if (!sd_obj.supported || !sd_obj.collectWardriveLogs() || sd_obj.sd_files == nullptr)

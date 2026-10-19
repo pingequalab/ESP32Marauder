@@ -369,7 +369,10 @@ void CommandLine::runCommand(String input) {
 
   // SigRoam status only. The Marauder app menu never sends this word.
   if (cmd_args.get(0) == SIGROAM_CMD) {
-    wifi_scan_obj.printSigRoamStatus();
+    if (cmd_args.size() > 1 && cmd_args.get(1) == "mem")
+      wifi_scan_obj.printSigRoamMem();
+    else
+      wifi_scan_obj.printSigRoamStatus();
     return;
   }
 

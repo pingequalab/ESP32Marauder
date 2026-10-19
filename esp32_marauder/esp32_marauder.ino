@@ -298,6 +298,10 @@ void setup()
     if (!psramInit()) {
       Serial.println(F("PSRAM not available"));
     }
+    else {
+      Serial.print(F("PSRAM: "));
+      Serial.println(ESP.getPsramSize());
+    }
   #endif
 
   #ifdef HAS_SIMPLEX_DISPLAY

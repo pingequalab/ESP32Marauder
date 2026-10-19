@@ -767,12 +767,8 @@ WifiCredentialSaveResult Settings::saveWifiCredential(const String& ssid, const 
   profiles[0]["ssid"] = ssid;
   profiles[0]["password"] = password;
 
-  File settings_file = SPIFFS.open("/settings.json", FILE_WRITE);
-  if (!settings_file)
+  if (!writeSettingsDocument(json, this->json_settings_string))
     return WIFI_CREDENTIAL_ERROR;
-  serializeJson(json, settings_file);
-  settings_file.close();
-  serializeJson(json, this->json_settings_string);
   return result;
 }
 
@@ -786,12 +782,8 @@ bool Settings::removeSavedWifiCredential(uint8_t index) {
     return false;
   profiles.remove(index);
 
-  File settings_file = SPIFFS.open("/settings.json", FILE_WRITE);
-  if (!settings_file)
+  if (!writeSettingsDocument(json, this->json_settings_string))
     return false;
-  serializeJson(json, settings_file);
-  settings_file.close();
-  serializeJson(json, this->json_settings_string);
   return true;
 }
 

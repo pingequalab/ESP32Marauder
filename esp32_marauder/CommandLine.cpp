@@ -369,10 +369,41 @@ void CommandLine::runCommand(String input) {
 
   // SigRoam status only. The Marauder app menu never sends this word.
   if (cmd_args.get(0) == SIGROAM_CMD) {
-    if (cmd_args.size() > 1 && cmd_args.get(1) == "mem")
+    String sub = cmd_args.size() > 1 ? cmd_args.get(1) : "";
+    if (sub == "mem") {
       wifi_scan_obj.printSigRoamMem();
-    else
+    }
+    else if (sub == "ignore") {
+      String act = cmd_args.size() > 2 ? cmd_args.get(2) : "list";
+      if (act == "add") {
+        if (cmd_args.size() > 3 && settings_obj.addIgnoreSsid(cmd_args.get(3)))
+          Serial.println("Ignore added: " + cmd_args.get(3));
+        else
+          Serial.println(F("Ignore add failed (dup/full/invalid; max 10, 1-32 chars)"));
+      }
+      else if (act == "rm") {
+        int idx = cmd_args.size() > 3 ? cmd_args.get(3).toInt() : 0;
+        if (idx >= 1 && settings_obj.removeIgnoreSsid(idx - 1))
+          Serial.printf("Ignore %d removed\n", idx);
+        else
+          Serial.println(F("Invalid index"));
+      }
+      else if (act == "clear") {
+        settings_obj.clearIgnoreSsids();
+        Serial.println(F("Ignore list cleared"));
+      }
+      else {
+        uint8_t n = settings_obj.getIgnoreSsidCount();
+        if (n == 0) Serial.println(F("Ignore list empty"));
+        else for (uint8_t i = 0; i < n; i++) {
+          String s; settings_obj.loadIgnoreSsid(i, s);
+          Serial.printf("%u: %s\n", i + 1, s.c_str());
+        }
+      }
+    }
+    else {
       wifi_scan_obj.printSigRoamStatus();
+    }
     return;
   }
 

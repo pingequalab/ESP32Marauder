@@ -57,6 +57,27 @@ static JsonObject ensureGeofenceSetting(DynamicJsonDocument& json) {
   return setting;
 }
 
+static JsonObject findIgnoreSetting(DynamicJsonDocument& json) {
+  for (JsonObject setting : json["Settings"].as<JsonArray>()) {
+    if (strcmp(setting["name"] | "", IGNORE_SSIDS_KEY_NAME) == 0)
+      return setting;
+  }
+  return JsonObject();
+}
+
+static JsonObject ensureIgnoreSetting(DynamicJsonDocument& json) {
+  JsonObject setting = findIgnoreSetting(json);
+  if (!setting.isNull()) return setting;
+  setting = json["Settings"].as<JsonArray>().createNestedObject();
+  setting["name"] = IGNORE_SSIDS_KEY_NAME;
+  setting["type"] = "string list";
+  setting.createNestedArray("value");
+  JsonObject range = setting.createNestedObject("range");
+  range["min"] = 0;
+  range["max"] = MAX_IGNORE_SSIDS;
+  return setting;
+}
+
 static bool writeSettingsDocument(DynamicJsonDocument& json, String& cache) {
   File file = SPIFFS.open("/settings.json", FILE_WRITE);
   if (!file) return false;
@@ -110,6 +131,13 @@ void Settings::_buildCache() {
       _cache.wt = json["Settings"][i]["value"].as<String>();
     else if (strcmp(name, WDG_KEY_NAME) == 0)
       _cache.wdg_key = json["Settings"][i]["value"].as<String>();
+    else if (strcmp(name, IGNORE_SSIDS_KEY_NAME) == 0) {
+      _cache.IgnoreCount = 0;
+      for (JsonVariant v : json["Settings"][i]["value"].as<JsonArray>()) {
+        if (_cache.IgnoreCount >= MAX_IGNORE_SSIDS) break;
+        _cache.IgnoreSSIDs[_cache.IgnoreCount++] = v.as<String>();
+      }
+    }
   }
 }
 
@@ -159,6 +187,10 @@ bool Settings::begin() {
   }
   if (findGeofenceSetting(jsonBuffer).isNull()) {
     ensureGeofenceSetting(jsonBuffer);
+    settings_changed = true;
+  }
+  if (findIgnoreSetting(jsonBuffer).isNull()) {
+    ensureIgnoreSetting(jsonBuffer);
     settings_changed = true;
   }
   if (dropSettingNamed(jsonBuffer, "t_ssid"))
@@ -823,4 +855,60 @@ bool Settings::clearGeofence(uint8_t index) {
     if ((uint8_t)(entries[i]["slot"] | 255) == index) { entries.remove(i); break; }
   }
   return writeSettingsDocument(json, this->json_settings_string);
+}
+
+uint8_t Settings::getIgnoreSsidCount() {
+  return _cache.IgnoreCount;
+}
+
+bool Settings::loadIgnoreSsid(uint8_t index, String& ssid) {
+  ssid = "";
+  if (index >= _cache.IgnoreCount) return false;
+  ssid = _cache.IgnoreSSIDs[index];
+  return ssid.length() > 0;
+}
+
+bool Settings::addIgnoreSsid(const String& ssid) {
+  if (ssid.length() == 0 || ssid.length() > 32) return false;
+  DynamicJsonDocument json(JSON_SETTING_SIZE);
+  if (deserializeJson(json, this->json_settings_string)) return false;
+  JsonObject setting = ensureIgnoreSetting(json);
+  JsonArray entries = setting["value"].as<JsonArray>();
+  for (JsonVariant v : entries) {
+    if (ssid == v.as<String>()) return false;
+  }
+  if (entries.size() >= MAX_IGNORE_SSIDS) return false;
+  entries.add(ssid);
+  if (!writeSettingsDocument(json, this->json_settings_string)) return false;
+  this->_buildCache();
+  return true;
+}
+
+bool Settings::removeIgnoreSsid(uint8_t index) {
+  DynamicJsonDocument json(JSON_SETTING_SIZE);
+  if (deserializeJson(json, this->json_settings_string)) return false;
+  JsonObject setting = findIgnoreSetting(json);
+  if (setting.isNull()) return false;
+  JsonArray entries = setting["value"].as<JsonArray>();
+  if (index >= entries.size()) return false;
+  entries.remove(index);
+  if (!writeSettingsDocument(json, this->json_settings_string)) return false;
+  this->_buildCache();
+  return true;
+}
+
+bool Settings::clearIgnoreSsids() {
+  DynamicJsonDocument json(JSON_SETTING_SIZE);
+  if (deserializeJson(json, this->json_settings_string)) return false;
+  JsonObject setting = ensureIgnoreSetting(json);
+  setting["value"].as<JsonArray>().clear();
+  if (!writeSettingsDocument(json, this->json_settings_string)) return false;
+  this->_buildCache();
+  return true;
+}
+
+bool Settings::isSsidIgnored(const String& ssid) {
+  for (uint8_t i = 0; i < _cache.IgnoreCount; i++)
+    if (_cache.IgnoreSSIDs[i] == ssid) return true;
+  return false;
 }

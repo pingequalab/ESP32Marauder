@@ -18,6 +18,8 @@
 #endif
 
 #define WDG_KEY_NAME       "wdg_key"   // WDG Wars API key (String)
+#define IGNORE_SSIDS_KEY_NAME "IgnoreSSIDs"
+#define MAX_IGNORE_SSIDS 10
 #define SAVED_WIFI_KEY_NAME "SavedWiFi"
 #define MAX_SAVED_WIFI_PROFILES 5
 #define GEOFENCES_KEY_NAME "Geofences"
@@ -58,6 +60,8 @@ class Settings {
       String wu           = "";
       String wt           = "";
       String wdg_key      = "";
+      String IgnoreSSIDs[MAX_IGNORE_SSIDS];
+      uint8_t IgnoreCount = 0;
     } _cache;
 
     void _buildCache();  // parse json_settings_string -> _cache
@@ -88,6 +92,12 @@ class Settings {
     bool loadGeofence(uint8_t index, GeofenceConfig& geofence);
     bool saveGeofence(uint8_t index, const GeofenceConfig& geofence);
     bool clearGeofence(uint8_t index);
+    uint8_t getIgnoreSsidCount();
+    bool loadIgnoreSsid(uint8_t index, String& ssid);
+    bool addIgnoreSsid(const String& ssid);
+    bool removeIgnoreSsid(uint8_t index);
+    bool clearIgnoreSsids();
+    bool isSsidIgnored(const String& ssid);
     //bool createDefaultSettings(fs::FS &fs, bool spec = false, uint8_t index = 0, String typeStr = "bool", String name = "");
     bool createDefaultSettings(fs::FS &fs, bool spec = false, uint8_t index = 0, const char* typeStr = "bool", const char* name = "");
     void printJsonSettings(String json_string);

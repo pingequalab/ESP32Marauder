@@ -58,7 +58,15 @@ void Buffer::setDirectory(const char* path) {
   directory = path;
 }
 
+// name must outlive the log session (string literal).
+void Buffer::setRotate(uint32_t limit_bytes, const String& header, const char* name) {
+  rotate_bytes = limit_bytes;
+  rotate_header = header;
+  rotate_name = name;
+}
+
 void Buffer::openFile(const char* file_name, fs::FS* fs, bool serial, bool is_pcap, bool is_gpx) {
+  rotate_bytes = 0;
   bool save_pcap = settings_obj.loadSetting<bool>("SavePCAP");
   if (!save_pcap) {
     this->fs = NULL;
@@ -196,7 +204,17 @@ void Buffer::saveFs(){
     }
   }
 
+  size_t written = file.size();
   file.close();
+
+  if (rotate_bytes > 0 && rotate_name && written >= rotate_bytes) {
+    createFile(rotate_name, false);
+    File next = fs->open(fileName, FILE_APPEND);
+    if (next) {
+      next.print(rotate_header);
+      next.close();
+    }
+  }
 }
 
 void Buffer::saveSerial() {

@@ -6783,6 +6783,7 @@ void WiFiScan::RunBeaconScan(uint8_t scan_mode, uint16_t color) {
     #ifdef HAS_GPS
       if (gps_obj.getGpsModuleStatus()) {
         startLog("wardrive");
+        buffer_obj.setRotate(this->wardrive_split_kb * 1024UL, this->header_line, "wardrive");
         buffer_obj.append(this->header_line);
         this->openPoiFile();
       } else {

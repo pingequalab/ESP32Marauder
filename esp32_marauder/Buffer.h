@@ -27,6 +27,7 @@ class Buffer {
     void save();
     String getFileName();
     void setDirectory(const char* path);
+    void setRotate(uint32_t limit_bytes, const String& header, const char* name);
   private:
     void createFile(const char* name, bool is_pcap, bool is_gpx = false);
     void open(bool is_pcap);
@@ -51,6 +52,9 @@ class Buffer {
 
     String fileName = "/0.pcap";
     const char* directory = NULL;
+    uint32_t rotate_bytes = 0;
+    String rotate_header;
+    const char* rotate_name = NULL;
     File file;
     fs::FS* fs;
     bool serial;

@@ -420,6 +420,17 @@ void CommandLine::runCommand(String input) {
         }
       #endif
     }
+    else if (sub == "split") {
+      if (cmd_args.size() > 2) {
+        String arg = cmd_args.get(2);
+        long kb = arg.toInt();
+        if (arg == "0" || (kb >= 4 && kb <= 102400))
+          wifi_scan_obj.wardrive_split_kb = kb;
+        else
+          Serial.println(F("Invalid size (0=off, 4-102400 KB)"));
+      }
+      Serial.printf("Split: %u KB (next wardrive)\n", (unsigned)wifi_scan_obj.wardrive_split_kb);
+    }
     else {
       wifi_scan_obj.printSigRoamStatus();
     }

@@ -224,6 +224,47 @@ bool SDInterface::removeFile(String file_path) {
     return false;
 }
 
+static bool isWardriveLogName(const String& name) {
+  return (name.startsWith("wardrive_") || name.startsWith("wigle-")) &&
+         name.indexOf('/') < 0 && name.indexOf('\\') < 0 && name.indexOf("..") < 0;
+}
+
+// Upload markers must go with the log: new logs reuse the lowest free index,
+// and a stale <name>.wigle would make the new file look already uploaded.
+bool SDInterface::removeWardriveLog(const String& name) {
+  if (!this->supported || !isWardriveLogName(name))
+    return false;
+  if (!this->removeFile("/" + name))
+    return false;
+  this->removeFile("/" + name + ".wdg");
+  this->removeFile("/" + name + ".wigle");
+  return true;
+}
+
+int SDInterface::removeAllWardriveLogs() {
+  if (!this->supported)
+    return -1;
+  LinkedList<String> names;
+  this->listDirToLinkedList(&names);
+  int removed = 0;
+  for (int i = 0; i < names.size(); i++) {
+    String name = names.get(i);
+    int slash = name.lastIndexOf('/');
+    if (slash >= 0)
+      name = name.substring(slash + 1);
+    if (!isWardriveLogName(name))
+      continue;
+    if (this->removeFile("/" + name)) {
+      Serial.println("Removed file: " + name);
+      removed++;
+    }
+    else {
+      Serial.println("Could not remove file: " + name);
+    }
+  }
+  return removed;
+}
+
 // GCOVR_EXCL_START -- requires mounted SPIFFS and SD filesystems.
 bool SDInterface::migrateSPIFFS(uint8_t operation, size_t& files_copied, size_t& bytes_copied, uint8_t& error) {
   files_copied = bytes_copied = error = 0;

@@ -401,6 +401,25 @@ void CommandLine::runCommand(String input) {
         }
       }
     }
+    else if (sub == "rm") {
+      #ifdef HAS_SD
+        String target = cmd_args.size() > 2 ? cmd_args.get(2) : "";
+        if (wifi_scan_obj.currentScanMode != WIFI_SCAN_OFF) {
+          Serial.println(F("Busy: stopscan first"));
+        }
+        else if (target == "all") {
+          int n = sd_obj.removeAllWardriveLogs();
+          if (n < 0) Serial.println(F("SD not available"));
+          else Serial.printf("Removed %d files\n", n);
+        }
+        else if (sd_obj.removeWardriveLog(target)) {
+          Serial.println("Removed file: " + target);
+        }
+        else {
+          Serial.println(F("Remove failed (usage: sigroam rm <wardrive_*|wigle-*>|all, SD root only)"));
+        }
+      #endif
+    }
     else {
       wifi_scan_obj.printSigRoamStatus();
     }

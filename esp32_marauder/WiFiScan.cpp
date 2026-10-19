@@ -6173,14 +6173,12 @@ void WiFiScan::setBaseMacAddress(uint8_t macAddr[6]) {
 
           String ssid = WiFi.SSID(i);
 
-          bool ignored = settings_obj.isSsidIgnored(ssid);
-
           ssid.replace(",","_");
 
           String wardrive_line = WiFi.BSSIDstr(i) + "," + ssid + "," + this->security_int_to_string(WiFi.encryptionType(i)) + "," + gps_obj.getDatetime() + "," + (String)WiFi.channel(i) + "," + (String)WiFi.RSSI(i) + "," + gps_obj.getLat() + "," + gps_obj.getLon() + "," + gps_obj.getAlt() + "," + gps_obj.getAccuracy() + ",WIFI\n";
           Serial.print((String)this->mac_history_cursor + " | " + wardrive_line);
 
-          if (do_save && !ignored) {
+          if (do_save) {
             buffer_obj.append(wardrive_line);
           }
 
@@ -6330,6 +6328,7 @@ void WiFiScan::executeWarDrive() {
             continue;
 
           String ssid = WiFi.SSID(i);
+          bool ignored = settings_obj.isSsidIgnored(ssid);
           ssid.replace(",", "_");
 
           String wardrive_line =
@@ -6347,7 +6346,8 @@ void WiFiScan::executeWarDrive() {
           Serial.print((String)this->mac_history_cursor + " | " + wardrive_line);
 
           if (do_save) {
-            buffer_obj.append(wardrive_line);
+            if (!ignored)
+              buffer_obj.append(wardrive_line);
             this->save_mac(this_bssid_raw);
           }
 

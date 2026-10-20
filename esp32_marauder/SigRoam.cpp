@@ -148,6 +148,77 @@ void printSigRoamMem() {
   Serial.println(heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM));
 }
 
+static bool isWardriveLogName(const String& name) {
+  return (name.startsWith("wardrive_") || name.startsWith("wigle-")) &&
+         name.indexOf('/') < 0 && name.indexOf('\\') < 0 && name.indexOf("..") < 0;
+}
+
+// Upload markers must go with the log: new logs reuse the lowest free index,
+// and a stale <name>.wigle would make the new file look already uploaded.
+static bool removeWardriveLog(const String& name) {
+  if (!sd_obj.supported || !isWardriveLogName(name))
+    return false;
+  if (!sd_obj.removeFile("/" + name))
+    return false;
+  sd_obj.removeFile("/" + name + ".wdg");
+  sd_obj.removeFile("/" + name + ".wigle");
+  return true;
+}
+
+static int removeAllWardriveLogs() {
+  if (!sd_obj.supported)
+    return -1;
+  LinkedList<String> names;
+  sd_obj.listDirToLinkedList(&names);
+  int removed = 0;
+  for (int i = 0; i < names.size(); i++) {
+    String name = names.get(i);
+    int slash = name.lastIndexOf('/');
+    if (slash >= 0)
+      name = name.substring(slash + 1);
+    if (!isWardriveLogName(name))
+      continue;
+    if (sd_obj.removeFile("/" + name)) {
+      Serial.println("Removed file: " + name);
+      removed++;
+    }
+    else {
+      Serial.println("Could not remove file: " + name);
+    }
+  }
+  return removed;
+}
+
+
+bool collectWardriveLogs() {
+  if (!sd_obj.supported)
+    return false;
+  if (sd_obj.sd_files == nullptr)
+    sd_obj.sd_files = new LinkedList<String>();
+  sd_obj.sd_files->clear();
+
+  File dir = SD.open("/");
+  if (!dir || !dir.isDirectory()) {
+    dir.close();
+    return true;
+  }
+
+  File entry = dir.openNextFile();
+  while (entry) {
+    if (!entry.isDirectory()) {
+      String name = entry.name();
+      if ((name.startsWith("wardrive_") || name.startsWith("wigle-")) &&
+          !name.endsWith(".wigle") && !name.endsWith(".wdg") && !name.endsWith(".gpx"))
+        sd_obj.sd_files->add(name);
+    }
+    entry.close();
+    entry = dir.openNextFile();
+  }
+  dir.close();
+  return true;
+}
+
+
 void sigroamRunCommand(LinkedList<String>& cmd_args) {
     String sub = cmd_args.size() > 1 ? cmd_args.get(1) : "";
     if (sub == "mem") {
@@ -188,11 +259,11 @@ void sigroamRunCommand(LinkedList<String>& cmd_args) {
           Serial.println(F("Busy: stopscan first"));
         }
         else if (target == "all") {
-          int n = sd_obj.removeAllWardriveLogs();
+          int n = removeAllWardriveLogs();
           if (n < 0) Serial.println(F("SD not available"));
           else Serial.printf("Removed %d files\n", n);
         }
-        else if (sd_obj.removeWardriveLog(target)) {
+        else if (removeWardriveLog(target)) {
           Serial.println("Removed file: " + target);
         }
         else {

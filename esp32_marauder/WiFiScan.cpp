@@ -1,5 +1,6 @@
 #include "esp_random.h"
 #include "WiFiScan.h"
+#include "SigRoam.h"
 #include "ReconMission.h"
 #include "FoxHuntTarget.h"
 #include "BeaconFrame.h"
@@ -11850,7 +11851,7 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
 
   WiFiScan::WardriveUploadResult WiFiScan::uploadWardriveLogs(uint8_t upload_type) {
     WardriveUploadResult result;
-    if (!sd_obj.supported || !sd_obj.collectWardriveLogs() || sd_obj.sd_files == nullptr)
+    if (!sd_obj.supported || !collectWardriveLogs() || sd_obj.sd_files == nullptr)
       return result;
 
     for (int i = 0; i < sd_obj.sd_files->size(); i++) {

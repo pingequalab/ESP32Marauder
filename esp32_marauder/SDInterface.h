@@ -72,7 +72,6 @@ class SDInterface {
 
     LinkedList<String>* sd_files;
 
-    bool collectWardriveLogs();
     void listDir(String str_dir);
     void listDirToLinkedList(LinkedList<String>* file_names, String str_dir = "/", String ext = "");
     bool listDirectory(String path, LinkedList<SDDirectoryEntry>* entries);
@@ -80,8 +79,6 @@ class SDInterface {
     void runUpdate(String file_name = "");
     bool performUpdate(Stream &updateSource, size_t updateSize);
     bool removeFile(String file_path);
-    bool removeWardriveLog(const String& name);
-    int removeAllWardriveLogs();
     bool migrateSPIFFS(uint8_t operation, size_t& files, size_t& bytes, uint8_t& error);
 };
 

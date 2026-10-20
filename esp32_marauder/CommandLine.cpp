@@ -1,4 +1,5 @@
 #include "CommandLine.h"
+#include "SigRoam.h"
 
 // GCOVR_EXCL_START -- serial protocol output depends on Arduino Serial.
 namespace {
@@ -369,71 +370,7 @@ void CommandLine::runCommand(String input) {
 
   // SigRoam status only. The Marauder app menu never sends this word.
   if (cmd_args.get(0) == SIGROAM_CMD) {
-    String sub = cmd_args.size() > 1 ? cmd_args.get(1) : "";
-    if (sub == "mem") {
-      wifi_scan_obj.printSigRoamMem();
-    }
-    else if (sub == "ignore") {
-      String act = cmd_args.size() > 2 ? cmd_args.get(2) : "list";
-      if (act == "add") {
-        if (cmd_args.size() > 3 && settings_obj.addIgnoreSsid(cmd_args.get(3)))
-          Serial.println("Ignore added: " + cmd_args.get(3));
-        else
-          Serial.println(F("Ignore add failed (dup/full/invalid; max 10, 1-32 chars)"));
-      }
-      else if (act == "rm") {
-        int idx = cmd_args.size() > 3 ? cmd_args.get(3).toInt() : 0;
-        if (idx >= 1 && settings_obj.removeIgnoreSsid(idx - 1))
-          Serial.printf("Ignore %d removed\n", idx);
-        else
-          Serial.println(F("Invalid index"));
-      }
-      else if (act == "clear") {
-        settings_obj.clearIgnoreSsids();
-        Serial.println(F("Ignore list cleared"));
-      }
-      else {
-        uint8_t n = settings_obj.getIgnoreSsidCount();
-        if (n == 0) Serial.println(F("Ignore list empty"));
-        else for (uint8_t i = 0; i < n; i++) {
-          String s; settings_obj.loadIgnoreSsid(i, s);
-          Serial.printf("%u: %s\n", i + 1, s.c_str());
-        }
-      }
-    }
-    else if (sub == "rm") {
-      #ifdef HAS_SD
-        String target = cmd_args.size() > 2 ? cmd_args.get(2) : "";
-        if (wifi_scan_obj.currentScanMode != WIFI_SCAN_OFF) {
-          Serial.println(F("Busy: stopscan first"));
-        }
-        else if (target == "all") {
-          int n = sd_obj.removeAllWardriveLogs();
-          if (n < 0) Serial.println(F("SD not available"));
-          else Serial.printf("Removed %d files\n", n);
-        }
-        else if (sd_obj.removeWardriveLog(target)) {
-          Serial.println("Removed file: " + target);
-        }
-        else {
-          Serial.println(F("Remove failed (usage: sigroam rm <wardrive_*|wigle-*>|all, SD root only)"));
-        }
-      #endif
-    }
-    else if (sub == "split") {
-      if (cmd_args.size() > 2) {
-        String arg = cmd_args.get(2);
-        long kb = arg.toInt();
-        if (arg == "0" || (kb >= 4 && kb <= 102400))
-          wifi_scan_obj.wardrive_split_kb = kb;
-        else
-          Serial.println(F("Invalid size (0=off, 4-102400 KB)"));
-      }
-      Serial.printf("Split: %u KB (next wardrive)\n", (unsigned)wifi_scan_obj.wardrive_split_kb);
-    }
-    else {
-      wifi_scan_obj.printSigRoamStatus();
-    }
+    sigroamRunCommand(cmd_args);
     return;
   }
 

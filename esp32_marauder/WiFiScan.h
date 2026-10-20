@@ -1116,8 +1116,6 @@ class WiFiScan
       bool any_sent = false;
     };
     WardriveUploadResult uploadWardriveLogs(uint8_t upload_type);
-    void printSigRoamStatus();
-    void printSigRoamMem();
     String checkEmptyProbe(String essid);
     bool checkFlockOUI(const uint8_t mac[6]);
     bool startWiFi(String ssid, String password, bool gui = true);

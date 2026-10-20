@@ -87,7 +87,6 @@ const char PROGMEM SNIFF_DEAUTH_CMD[] = "sniffdeauth";
 const char PROGMEM SNIFF_PMKID_CMD[] = "sniffpmkid";
 const char PROGMEM STOPSCAN_CMD[] = "stopscan";
 const char PROGMEM WARDRIVE_CMD[] = "wardrive";
-const char PROGMEM SIGROAM_CMD[] = "sigroam";
 const char PROGMEM PING_CMD[] = "pingscan";
 const char PROGMEM PORT_SCAN_CMD[] = "portscan";
 const char PROGMEM ARP_SCAN_CMD[] = "arpscan";

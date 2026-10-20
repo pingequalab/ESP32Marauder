@@ -2742,12 +2742,7 @@ bool WiFiScan::scanning() {
 // Function to prepare to run a specific scan
 void WiFiScan::StartScan(uint8_t scan_mode, uint16_t color) {  
   this->initWiFi(scan_mode);
-  if (scan_mode == WIFI_SCAN_WAR_DRIVE) {
-    this->sig_session_on = true;
-    this->sig_session_start_ms = millis();
-  } else {
-    this->sig_session_on = false;
-  }
+  sigroamOnStartScan(scan_mode);
   if (scan_mode == WIFI_SCAN_OFF) {
     #ifdef HAS_ACT_LED
       digitalWrite(ACT_LED_PIN, LOW);
@@ -6784,7 +6779,7 @@ void WiFiScan::RunBeaconScan(uint8_t scan_mode, uint16_t color) {
     #ifdef HAS_GPS
       if (gps_obj.getGpsModuleStatus()) {
         startLog("wardrive");
-        buffer_obj.setRotate(this->wardrive_split_kb * 1024UL, this->header_line, "wardrive");
+        sigroamArmWardriveRotate(this->header_line);
         buffer_obj.append(this->header_line);
         this->openPoiFile();
       } else {

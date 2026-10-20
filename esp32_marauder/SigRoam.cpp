@@ -4,6 +4,21 @@
 
 const char PROGMEM SIGROAM_CMD[] = "sigroam";
 
+SigRoamState sigroam_state;
+
+void sigroamOnStartScan(uint8_t scan_mode) {
+  if (scan_mode == WIFI_SCAN_WAR_DRIVE) {
+    sigroam_state.sig_session_on = true;
+    sigroam_state.sig_session_start_ms = millis();
+  } else {
+    sigroam_state.sig_session_on = false;
+  }
+}
+
+void sigroamArmWardriveRotate(const String& header_line) {
+  buffer_obj.setRotate(sigroam_state.wardrive_split_kb * 1024UL, header_line, "wardrive");
+}
+
   static uint32_t countLogsMissingWigleSidecar() {
     uint32_t pending = 0;
     if (!sd_obj.supported)
@@ -33,11 +48,11 @@ const char PROGMEM SIGROAM_CMD[] = "sigroam";
   }
 
 void printSigRoamStatus() {
-    const bool scanning = wifi_scan_obj.currentScanMode == WIFI_SCAN_WAR_DRIVE && wifi_scan_obj.sig_session_on;
+    const bool scanning = wifi_scan_obj.currentScanMode == WIFI_SCAN_WAR_DRIVE && sigroam_state.sig_session_on;
     const uint8_t st = scanning ? 1 : 0;
     uint32_t session_ms = 0;
     if (scanning) {
-      session_ms = millis() - wifi_scan_obj.sig_session_start_ms;
+      session_ms = millis() - sigroam_state.sig_session_start_ms;
       if (session_ms == 0)
         session_ms = 1;
     }
@@ -276,11 +291,11 @@ void sigroamRunCommand(LinkedList<String>& cmd_args) {
         String arg = cmd_args.get(2);
         long kb = arg.toInt();
         if (arg == "0" || (kb >= 4 && kb <= 102400))
-          wifi_scan_obj.wardrive_split_kb = kb;
+          sigroam_state.wardrive_split_kb = kb;
         else
           Serial.println(F("Invalid size (0=off, 4-102400 KB)"));
       }
-      Serial.printf("Split: %u KB (next wardrive)\n", (unsigned)wifi_scan_obj.wardrive_split_kb);
+      Serial.printf("Split: %u KB (next wardrive)\n", (unsigned)sigroam_state.wardrive_split_kb);
     }
     else {
       printSigRoamStatus();

@@ -19,6 +19,13 @@ void sigroamArmWardriveRotate(const String& header_line) {
   buffer_obj.setRotate(sigroam_state.wardrive_split_kb * 1024UL, header_line, "wardrive");
 }
 
+void sigroamPrintBootBanner() {
+  #ifdef MARAUDER_C5
+    Serial.println(F("         PINGEQUA Scout Lite\n"));
+    Serial.println(F("         Dual-band Wardriver\n"));
+  #endif
+}
+
   static uint32_t countLogsMissingWigleSidecar() {
     uint32_t pending = 0;
     if (!sd_obj.supported)

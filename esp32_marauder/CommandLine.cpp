@@ -63,6 +63,7 @@ void CommandLine::RunSetup() {
   Serial.println(F("\n\n--------------------------------\n"));
   Serial.println(F("         ESP32 Marauder      \n"));
   Serial.println("            " + version_number + "\n");
+  sigroamPrintBootBanner(); // SCOUT-LITE
   Serial.println(F("       By: justcallmekoko\n"));
   Serial.println(F("--------------------------------\n\n"));
   

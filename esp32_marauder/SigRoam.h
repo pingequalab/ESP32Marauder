@@ -3,6 +3,12 @@
 #include <Arduino.h>
 #include <LinkedList.h>
 
+#ifdef MARAUDER_C5
+#define SIGROAM_HARDWARE_DISPLAY "PINGEQUA Scout Lite (Dual-band Wardriver)"
+#else
+#define SIGROAM_HARDWARE_DISPLAY HARDWARE_NAME
+#endif
+
 extern const char SIGROAM_CMD[];
 
 struct SigRoamState {
@@ -17,3 +23,4 @@ void sigroamRunCommand(LinkedList<String>& cmd_args);
 bool collectWardriveLogs();
 void sigroamOnStartScan(uint8_t scan_mode);
 void sigroamArmWardriveRotate(const String& header_line);
+void sigroamPrintBootBanner();

@@ -4914,7 +4914,7 @@ void WiFiScan::RunInfo() {
 
   Serial.println(text_table4[20]);
   Serial.println(text_table4[21] + (String)MARAUDER_VERSION);
-  Serial.println("Hardware: " + (String)HARDWARE_NAME);
+  Serial.println("Hardware: " + (String)SIGROAM_HARDWARE_DISPLAY); // SCOUT-LITE
   Serial.println("App partition: " + app_partition);
   Serial.println(text_table4[22] + (String)esp_get_idf_version());
 

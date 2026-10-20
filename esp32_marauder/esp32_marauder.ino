@@ -298,6 +298,7 @@ void setup()
     if (!psramInit()) {
       Serial.println(F("PSRAM not available"));
     }
+    // SCOUT-LITE
     else {
       Serial.print(F("PSRAM: "));
       Serial.println(ESP.getPsramSize());

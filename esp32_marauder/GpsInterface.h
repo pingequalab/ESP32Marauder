@@ -40,6 +40,7 @@ class GpsInterface {
     void main();
 
     int getNumSats();
+    // SCOUT-LITE
     uint32_t getGgaCount();
     uint32_t getGgaFixCount();
     String getNumSatsString();
@@ -107,6 +108,7 @@ class GpsInterface {
     bool good_fix = false;
     char nav_system='\0';
     uint8_t num_sats = 0;
+    // SCOUT-LITE
     uint32_t gga_count = 0;
     uint32_t gga_fix_count = 0;
 

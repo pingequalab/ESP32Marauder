@@ -368,6 +368,7 @@ void CommandLine::runCommand(String input) {
     return;
   }
 
+  // SCOUT-LITE
   // SigRoam status only. The Marauder app menu never sends this word.
   if (cmd_args.get(0) == SIGROAM_CMD) {
     sigroamRunCommand(cmd_args);
@@ -696,6 +697,7 @@ void CommandLine::runCommand(String input) {
         upload_dest = BOTH_UPLOAD;
 
       if (upload_dest > -1) {
+        // SCOUT-LITE
         const uint8_t mode_before_upload = wifi_scan_obj.currentScanMode;
         if (!wifi_scan_obj.joinSavedWiFi(false)) {
           Serial.println(F("Failed to connect to saved WiFi"));

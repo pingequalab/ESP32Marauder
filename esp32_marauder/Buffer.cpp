@@ -58,6 +58,7 @@ void Buffer::setDirectory(const char* path) {
   directory = path;
 }
 
+// SCOUT-LITE
 // name must outlive the log session (string literal).
 void Buffer::setRotate(uint32_t limit_bytes, const String& header, const char* name) {
   rotate_bytes = limit_bytes;
@@ -66,6 +67,7 @@ void Buffer::setRotate(uint32_t limit_bytes, const String& header, const char* n
 }
 
 void Buffer::openFile(const char* file_name, fs::FS* fs, bool serial, bool is_pcap, bool is_gpx) {
+  // SCOUT-LITE
   rotate_bytes = 0;
   bool save_pcap = settings_obj.loadSetting<bool>("SavePCAP");
   if (!save_pcap) {
@@ -204,6 +206,7 @@ void Buffer::saveFs(){
     }
   }
 
+  // SCOUT-LITE
   size_t written = file.size();
   file.close();
 

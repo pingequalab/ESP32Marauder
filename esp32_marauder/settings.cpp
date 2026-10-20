@@ -33,6 +33,7 @@ static JsonObject findGeofenceSetting(DynamicJsonDocument& json) {
   return JsonObject();
 }
 
+// SCOUT-LITE
 static bool dropSettingNamed(DynamicJsonDocument& json, const char* name) {
   JsonArray settings = json["Settings"].as<JsonArray>();
   bool dropped = false;
@@ -57,6 +58,7 @@ static JsonObject ensureGeofenceSetting(DynamicJsonDocument& json) {
   return setting;
 }
 
+// SCOUT-LITE
 static JsonObject findIgnoreSetting(DynamicJsonDocument& json) {
   for (JsonObject setting : json["Settings"].as<JsonArray>()) {
     if (strcmp(setting["name"] | "", IGNORE_SSIDS_KEY_NAME) == 0)
@@ -131,6 +133,7 @@ void Settings::_buildCache() {
       _cache.wt = json["Settings"][i]["value"].as<String>();
     else if (strcmp(name, WDG_KEY_NAME) == 0)
       _cache.wdg_key = json["Settings"][i]["value"].as<String>();
+    // SCOUT-LITE
     else if (strcmp(name, IGNORE_SSIDS_KEY_NAME) == 0) {
       _cache.IgnoreCount = 0;
       for (JsonVariant v : json["Settings"][i]["value"].as<JsonArray>()) {
@@ -189,6 +192,7 @@ bool Settings::begin() {
     ensureGeofenceSetting(jsonBuffer);
     settings_changed = true;
   }
+  // SCOUT-LITE
   if (findIgnoreSetting(jsonBuffer).isNull()) {
     ensureIgnoreSetting(jsonBuffer);
     settings_changed = true;
@@ -767,6 +771,7 @@ WifiCredentialSaveResult Settings::saveWifiCredential(const String& ssid, const 
   profiles[0]["ssid"] = ssid;
   profiles[0]["password"] = password;
 
+  // SCOUT-LITE
   if (!writeSettingsDocument(json, this->json_settings_string))
     return WIFI_CREDENTIAL_ERROR;
   return result;
@@ -782,6 +787,7 @@ bool Settings::removeSavedWifiCredential(uint8_t index) {
     return false;
   profiles.remove(index);
 
+  // SCOUT-LITE
   if (!writeSettingsDocument(json, this->json_settings_string))
     return false;
   return true;
@@ -849,6 +855,7 @@ bool Settings::clearGeofence(uint8_t index) {
   return writeSettingsDocument(json, this->json_settings_string);
 }
 
+// SCOUT-LITE
 uint8_t Settings::getIgnoreSsidCount() {
   return _cache.IgnoreCount;
 }

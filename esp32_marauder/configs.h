@@ -540,6 +540,7 @@
     #define HAS_SD
     #define USE_SD
     #define HAS_DUAL_BAND
+    // SCOUT-LITE
     #define HAS_PSRAM
     //#define HAS_TEMP_SENSOR
     #define HAS_NIMBLE_2

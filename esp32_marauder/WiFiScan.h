@@ -1109,6 +1109,7 @@ class WiFiScan
     wifi_config_t ap_config;
 
     bool uploadFile(String filePath, bool retry = false, uint8_t upload_type = WIGLE_UPLOAD);
+    // SCOUT-LITE
     struct WardriveUploadResult {
       bool any_file = false;
       bool any_failed = false;

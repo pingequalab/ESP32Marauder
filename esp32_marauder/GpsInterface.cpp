@@ -1,4 +1,5 @@
 #include "GpsInterface.h"
+// SCOUT-LITE
 #include <string.h>
 
 #ifdef HAS_GPS
@@ -630,6 +631,7 @@ String GpsInterface::getNumSatsString() {
   return (String)num_sats;
 }
 
+// SCOUT-LITE
 uint32_t GpsInterface::getGgaCount() {
   return this->gga_count;
 }
@@ -765,6 +767,7 @@ void GpsInterface::main() {
     char c = Serial2.read();
     //Serial.print(c);
     //Pass the character to the library
+    // SCOUT-LITE
     if (nmea.process(c)) {
       const char* message_id = nmea.getMessageID();
       if (message_id && strcmp(message_id, "GGA") == 0) {

@@ -714,6 +714,7 @@ extern "C" {
                   Serial.print(wardrive_line);
 
                   if (do_save && !wifi_scan_obj.isGeofencePaused()) {
+                    // SCOUT-LITE
                     buffer_obj.append(wardrive_line);
                     wifi_scan_obj.save_mac(mac_char);
                   }
@@ -1494,6 +1495,7 @@ extern "C" {
                   Serial.print(wardrive_line);
 
                   if (do_save && !wifi_scan_obj.isGeofencePaused()) {
+                    // SCOUT-LITE
                     buffer_obj.append(wardrive_line);
                     wifi_scan_obj.save_mac(mac_char);
                   }
@@ -2742,6 +2744,7 @@ bool WiFiScan::scanning() {
 // Function to prepare to run a specific scan
 void WiFiScan::StartScan(uint8_t scan_mode, uint16_t color) {  
   this->initWiFi(scan_mode);
+  // SCOUT-LITE
   sigroamOnStartScan(scan_mode);
   if (scan_mode == WIFI_SCAN_OFF) {
     #ifdef HAS_ACT_LED
@@ -6324,6 +6327,7 @@ void WiFiScan::executeWarDrive() {
             continue;
 
           String ssid = WiFi.SSID(i);
+          // SCOUT-LITE
           bool ignored = settings_obj.isSsidIgnored(ssid);
           ssid.replace(",", "_");
 
@@ -6342,6 +6346,7 @@ void WiFiScan::executeWarDrive() {
           Serial.print((String)this->mac_history_cursor + " | " + wardrive_line);
 
           if (do_save) {
+            // SCOUT-LITE
             if (!ignored)
               buffer_obj.append(wardrive_line);
             this->save_mac(this_bssid_raw);
@@ -6779,6 +6784,7 @@ void WiFiScan::RunBeaconScan(uint8_t scan_mode, uint16_t color) {
     #ifdef HAS_GPS
       if (gps_obj.getGpsModuleStatus()) {
         startLog("wardrive");
+        // SCOUT-LITE
         sigroamArmWardriveRotate(this->header_line);
         buffer_obj.append(this->header_line);
         this->openPoiFile();
@@ -9249,6 +9255,7 @@ void WiFiScan::beaconSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type
             Serial.print((String)wifi_scan_obj.mac_history_cursor + " | " + wardrive_line);
 
             if (gps_obj.getFixStatus() && !wifi_scan_obj.isGeofencePaused()) {
+              // SCOUT-LITE
               buffer_obj.append(wardrive_line);
               wifi_scan_obj.save_mac(src_addr);
               wifi_scan_obj.flock_devices++;
@@ -11844,6 +11851,7 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
     }
   }
 
+  // SCOUT-LITE
   WiFiScan::WardriveUploadResult WiFiScan::uploadWardriveLogs(uint8_t upload_type) {
     WardriveUploadResult result;
     if (!sd_obj.supported || !collectWardriveLogs() || sd_obj.sd_files == nullptr)

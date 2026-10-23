@@ -1,8 +1,9 @@
 # Channel A. This is the only upstream-tag schedule.
 # GitHub runs schedule from the default branch, so this starts after the file is on master.
 # Latest stable tag: the newest GitHub Release that is not a draft and not a prerelease.
-# Unchanged: exit 0. No issue and no AI.
-# Changed: open one issue, then stop. No firmware build, firmware PR, merge, release, or flash.
+# Unchanged: exit 0. No summary and no AI.
+# Changed: write the job summary and one notice, then exit 0. Do not open an issue.
+# No firmware build, firmware PR, merge, release, or flash.
 
 name: Scout Lite upstream tag
 
@@ -12,7 +13,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 concurrency:
   group: scout-lite-upstream-tag
@@ -29,9 +29,6 @@ jobs:
 
       - name: Compare recorded tag
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
 
@@ -59,37 +56,15 @@ jobs:
             exit 0
           fi
 
-          marker="scout-lite-upstream-tag:${latest}"
-          page=1
-          while true; do
-            batch=$(gh api "repos/${REPO}/issues?state=all&per_page=100&page=${page}")
-            count=$(jq 'length' <<<"$batch")
-            if [ "$count" -eq 0 ]; then
-              break
-            fi
-            hit=$(jq --arg m "$marker" '[.[] | select(.pull_request | not) | select(((.body // "") | gsub("\r"; "")) | split("\n") | index($m))] | length' <<<"$batch")
-            if [ "$hit" -gt 0 ]; then
-              exit 0
-            fi
-            if [ "$count" -lt 100 ]; then
-              break
-            fi
-            page=$((page + 1))
-            if [ "$page" -gt 20 ]; then
-              echo "stopped paging issues before proving ${marker} is new" >&2
-              exit 1
-            fi
-          done
-
-          body_file=$(mktemp)
+          release_url="https://github.com/justcallmekoko/ESP32Marauder/releases/tag/${latest}"
           {
-            printf '%s\n' "$marker"
-            printf '\n'
-            printf '已处理 tag：`%s`\n' "$recorded"
-            printf '上游最新正式 release tag：`%s`\n' "$latest"
-            printf 'https://github.com/justcallmekoko/ESP32Marauder/releases/tag/%s\n' "$latest"
-            printf '\n'
-            printf '%s\n' "同一 tag 只开这一条。不打开固件 PR，不合并，不编译固件，不发布，不刷机。"
-            printf '%s\n' "人处理完后，把 ${key} 那一行改成这个 tag。"
-          } > "$body_file"
-          gh issue create --repo "$REPO" --title "上游稳定 tag 变为 ${latest}" --body-file "$body_file"
+            echo "### Upstream stable tag is newer than the recorded tag"
+            echo
+            echo "- Recorded tag: \`${recorded}\`"
+            echo "- Latest upstream tag: \`${latest}\`"
+            echo "- Upstream release: ${release_url}"
+            echo
+            echo "No issue is opened. This check does not build firmware, open a firmware PR, merge, release, or flash."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=Upstream stable tag changed::recorded tag ${recorded}; latest upstream tag ${latest}; ${release_url}"
+          exit 0

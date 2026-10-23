@@ -6,7 +6,7 @@
 
 没有客户稳定固件。本文件不把编译通过写成实机可用。
 
-通道 A 只读下面这一行，当作已经处理过的上游稳定 tag。稳定 tag 指 `justcallmekoko/ESP32Marauder` 最新的非 draft、非 prerelease Release。人把这一行改成新 tag 之后，下一次检查才把它当成已处理。
+通道 A 只读下面这一行，当作已经处理过的上游稳定 tag。稳定 tag 指 `justcallmekoko/ESP32Marauder` 最新的非 draft、非 prerelease Release。人把这一行改成新 tag 之后，下一次检查才把它当成已处理。tag 不同时，workflow 把已记录 tag、上游最新 tag 和上游 release 链接写进 job summary，并发一条 notice，然后成功退出。不创建 issue。
 
 scout-lite-upstream-stable-tag: v1.18.0
 
@@ -93,11 +93,12 @@ GPS 接到 Flipper pin 15 和 16，不是官方 GPIO13/14。已记录，不是�
 | 2026-10-15 | Colin 批准文档 PR 合入条件，并批准通道 A | 批准范围只有这两件。workflow：`.github/workflows/scout-lite-upstream-tag.yml`。已处理 tag 行是 `scout-lite-upstream-stable-tag: v1.18.0`。未合并，未发布固件，未刷机 | schedule 要等该文件在 `master` 上才运行。原理图未确认 |
 | 2026-10-15 | Colin 确认 SD/GPS 接线，USB 开关除外 | `HARDWARE.md`。原理图确认，实机未测，不是 `CONFIRMED_WORKING`。未改固件，未合并，未刷机 | 当天留下的非关键走线问题已在下一条关闭 |
 | 2026-10-15 | Colin 收窄硬件范围 | 重要接线仍是 DevKit 的 SD 与 GPS 固件脚。下载模式只有板上 BOOT 和 EN。非关键走线不再追查。USB 自动切换仍不声称与 DevKit 相同。未改固件，未合并，未刷机 | 实机未测。PSRAM 容量 UNKNOWN。不是 `CONFIRMED_WORKING` |
+| 2026-10-23 | 通道 A 发现新 tag 时不再创建 issue | `.github/workflows/scout-lite-upstream-tag.yml`。本 fork 关闭了 Issues，`gh issue create` 使 [run 39755347552](https://github.com/pingequalab/ESP32Marauder/actions/runs/39755347552) 失败。改为 job summary 加 notice，成功退出。已记录 tag 行未改。未合并，未发布固件，未刷机 | 要等该文件合入 `master` 后，下一次 schedule 才用新行为 |
 
 ## 8. 最近一次同步摘要
 
 - 上游版本：源码版本字符串 `v1.18.0`。tag `v1.18.0`（`b2b9f92382eb60b39b8741be3b567e416cdbe672`）比 `d3ceb28afeda1196ca27c13adeaa69ada52383f3` 落后 10 commits。
-- 新增功能及受影响模块：无固件改动。另加一个每日 tag workflow。该 workflow 不编译固件。
+- 新增功能及受影响模块：无固件改动。每日 tag workflow 在上游 tag 新于已记录 tag 时写 job summary 和 notice，不创建 issue，不编译固件。
 - 自动测试：PR #1 在 `b242f00` 上 `Firmware Unit Tests` / `Native Unity tests`、`Scout Lite CI` / `Native Unity tests`、`Compile MARAUDER_C5` 为 SUCCESS。通道 A 不在 pull request 上跑。GitHub 的 schedule 只从默认分支 `master` 触发。
 - 实机验证：无。未刷机。
 - 是否允许稳定版发布：否。没有客户稳定固件。Colin 批准的是这份文档 PR 在 required CI 为绿后可合入 `master`，不是固件发布。Agent 不合并，不刷机。

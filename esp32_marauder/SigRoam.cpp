@@ -7,6 +7,13 @@ enum { SIGROAM_SD_POLL_MS = 30000 };
 enum { SIGROAM_TOPD_SD = 2 };
 
 static uint32_t sigroam_sd_next_ms = 0;
+static uint32_t sigroam_psram_seen_min = 0xFFFFFFFFu;
+
+static uint32_t sigroamPsramMin(uint32_t free_now) {
+  return sigroam_psram_low(free_now,
+                           heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM),
+                           &sigroam_psram_seen_min);
+}
 
 const char PROGMEM SIGROAM_CMD[] = "sigroam";
 
@@ -132,7 +139,7 @@ void printSigRoamStatus() {
     const uint32_t ih = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
     const uint32_t ihmin = heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
     const uint32_t ps = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
-    const uint32_t psmin = heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM);
+    const uint32_t psmin = sigroamPsramMin(ps);
     const uint32_t drop = sigroam_state.sd_drops;
     const uint8_t topd = drop > 0 ? SIGROAM_TOPD_SD : 0;
 
@@ -230,10 +237,11 @@ void printSigRoamMem() {
   Serial.print(heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
   Serial.print(F(" ps_total="));
   Serial.print(heap_caps_get_total_size(MALLOC_CAP_SPIRAM));
+  const uint32_t ps_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
   Serial.print(F(" ps_free="));
-  Serial.print(heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+  Serial.print(ps_free);
   Serial.print(F(" ps_min="));
-  Serial.println(heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM));
+  Serial.println(sigroamPsramMin(ps_free));
 }
 
 static bool isWardriveLogName(const String& name) {

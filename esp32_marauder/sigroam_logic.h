@@ -42,3 +42,17 @@ inline bool sigroam_sd_probe_due(bool scanning, uint32_t now_ms, uint32_t next_m
     return false;
   return (int32_t)(now_ms - next_ms) >= 0;
 }
+
+/* IDF 5.5.5 heap_caps_get_minimum_free_size() ignores heaps registered from
+ * app_main onward (esp_heap_caps.h). Arduino initArduino() adds PSRAM there
+ * when CONFIG_SPIRAM_BOOT_INIT is off, so the IDF call stays 0 while free
+ * size is real. idf_min == 0 means "not tracked", not "heap empty". */
+inline uint32_t sigroam_psram_low(uint32_t free_now, uint32_t idf_min, uint32_t* seen_min) {
+  uint32_t low = free_now;
+  if (idf_min != 0 && idf_min < low)
+    low = idf_min;
+  if (*seen_min < low)
+    low = *seen_min;
+  *seen_min = low;
+  return low;
+}

@@ -40,6 +40,15 @@ int main() {
   check(sigroam_sd_probe_due(false, 100, 100), "exact");
   check(sigroam_sd_probe_due(false, 10, 0xFFFFFFF0u), "wrap due");
 
+  uint32_t seen = 0xFFFFFFFFu;
+  check(sigroam_psram_low(8333064, 0, &seen) == 8333064 && seen == 8333064, "psram idf 0");
+  check(sigroam_psram_low(8000000, 0, &seen) == 8000000 && seen == 8000000, "psram drop");
+  check(sigroam_psram_low(8200000, 0, &seen) == 8000000 && seen == 8000000, "psram hold");
+  check(sigroam_psram_low(8200000, 7000000, &seen) == 7000000 && seen == 7000000, "psram idf lower");
+  seen = 0xFFFFFFFFu;
+  check(sigroam_psram_low(100, 50, &seen) == 50 && seen == 50, "psram idf first");
+  check(sigroam_psram_low(0, 0, &seen) == 0 && seen == 0, "psram real zero");
+
   if (g_fail) {
     fprintf(stderr, "%d failed\n", g_fail);
     return 1;

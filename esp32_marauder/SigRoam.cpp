@@ -1,15 +1,59 @@
 #include "SigRoam.h"
 #include "CommandLine.h"
+#include "sigroam_logic.h"
 #include <esp_heap_caps.h>
+
+enum { SIGROAM_SD_POLL_MS = 30000 };
+enum { SIGROAM_TOPD_SD = 2 };
+
+static uint32_t sigroam_sd_next_ms = 0;
 
 const char PROGMEM SIGROAM_CMD[] = "sigroam";
 
 SigRoamState sigroam_state;
 
+void sigroamLoadPersisted() {
+  sigroam_state.wardrive_split_kb = settings_obj.loadWardriveSplitKb();
+}
+
+void sigroamNoteSdBoot() {
+  sigroam_sd_next_ms = millis() + SIGROAM_SD_POLL_MS;
+}
+
+void sigroamNoteWifiChannel(int channel) {
+  const int band = sigroam_band(channel);
+  if (band == 1)
+    sigroam_state.wifi_24++;
+  else if (band == 2)
+    sigroam_state.wifi_5++;
+}
+
+void sigroamNoteSdDrop() {
+  sigroam_state.sd_drops++;
+}
+
+static void sigroamPollSd() {
+#ifdef HAS_SD
+  const bool scanning = wifi_scan_obj.currentScanMode != WIFI_SCAN_OFF;
+  const uint32_t now = millis();
+  if (!sigroam_sd_probe_due(scanning, now, sigroam_sd_next_ms))
+    return;
+  sigroam_sd_next_ms = now + SIGROAM_SD_POLL_MS;
+  sd_obj.pollIdle();
+#else
+  (void)0;
+#endif
+}
+
 void sigroamOnStartScan(uint8_t scan_mode) {
   if (scan_mode == WIFI_SCAN_WAR_DRIVE) {
     sigroam_state.sig_session_on = true;
     sigroam_state.sig_session_start_ms = millis();
+    sigroam_state.wifi_24 = 0;
+    sigroam_state.wifi_5 = 0;
+    sigroam_state.sd_drops = 0;
+    wifi_scan_obj.beacon_frames = 0;
+    wifi_scan_obj.bt_frames = 0;
   } else {
     sigroam_state.sig_session_on = false;
   }
@@ -55,6 +99,7 @@ void sigroamPrintBootBanner() {
   }
 
 void printSigRoamStatus() {
+    sigroamPollSd();
     const bool scanning = wifi_scan_obj.currentScanMode == WIFI_SCAN_WAR_DRIVE && sigroam_state.sig_session_on;
     const uint8_t st = scanning ? 1 : 0;
     uint32_t session_ms = 0;
@@ -84,6 +129,12 @@ void printSigRoamStatus() {
     #endif
     const uint32_t ap = wifi_scan_obj.beacon_frames;
     const uint32_t ble = wifi_scan_obj.bt_frames > 0 ? (uint32_t)wifi_scan_obj.bt_frames : 0;
+    const uint32_t ih = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+    const uint32_t ihmin = heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
+    const uint32_t ps = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    const uint32_t psmin = heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM);
+    const uint32_t drop = sigroam_state.sd_drops;
+    const uint8_t topd = drop > 0 ? SIGROAM_TOPD_SD : 0;
 
     String wu = settings_obj.loadSetting<String>("wu");
     String wt = settings_obj.loadSetting<String>("wt");
@@ -123,19 +174,29 @@ void printSigRoamStatus() {
     Serial.print(ble);
     Serial.print(F(" ms="));
     Serial.print(session_ms);
-    Serial.println(F(" ih=0 ihmin=0 ps=0 psmin=0"));
+    Serial.print(F(" ih="));
+    Serial.print(ih);
+    Serial.print(F(" ihmin="));
+    Serial.print(ihmin);
+    Serial.print(F(" ps="));
+    Serial.print(ps);
+    Serial.print(F(" psmin="));
+    Serial.println(psmin);
 
     Serial.print(F("Qual: gga="));
     Serial.print(gga);
     Serial.print(F(" ggafix="));
     Serial.print(ggafix);
-    Serial.print(F(" drop=0 net="));
+    Serial.print(F(" drop="));
+    Serial.print(drop);
+    Serial.print(F(" net="));
     Serial.print(ap);
     Serial.print(F(" sd="));
     Serial.print(sd_up);
     Serial.print(F(" sats="));
     Serial.print(sats);
-    Serial.println(F(" topd=0"));
+    Serial.print(F(" topd="));
+    Serial.println(topd);
 
     Serial.print(F("Radio: wifi=1 ble="));
     Serial.println(ble_ok);
@@ -152,6 +213,11 @@ void printSigRoamStatus() {
     Serial.print(home);
     Serial.print(F(" ssid="));
     Serial.println(ssid);
+
+    Serial.print(F("Band: w24="));
+    Serial.print(sigroam_state.wifi_24);
+    Serial.print(F(" w5="));
+    Serial.println(sigroam_state.wifi_5);
   }
 
 
@@ -296,11 +362,13 @@ void sigroamRunCommand(LinkedList<String>& cmd_args) {
     else if (sub == "split") {
       if (cmd_args.size() > 2) {
         String arg = cmd_args.get(2);
-        long kb = arg.toInt();
-        if (arg == "0" || (kb >= 4 && kb <= 102400))
-          sigroam_state.wardrive_split_kb = kb;
-        else
+        long kb = 0;
+        if (!sigroam_split_kb_ok(arg.c_str(), &kb))
           Serial.println(F("Invalid size (0=off, 4-102400 KB)"));
+        else if (!settings_obj.saveWardriveSplitKb((uint32_t)kb))
+          Serial.println(F("Split save failed"));
+        else
+          sigroam_state.wardrive_split_kb = (uint32_t)kb;
       }
       Serial.printf("Split: %u KB (next wardrive)\n", (unsigned)sigroam_state.wardrive_split_kb);
     }

@@ -20,6 +20,7 @@
 #define WDG_KEY_NAME       "wdg_key"   // WDG Wars API key (String)
 // SCOUT-LITE
 #define IGNORE_SSIDS_KEY_NAME "IgnoreSSIDs"
+#define WARDRIVE_SPLIT_KEY_NAME "WardriveSplitKB"
 #define MAX_IGNORE_SSIDS 10
 #define SAVED_WIFI_KEY_NAME "SavedWiFi"
 #define MAX_SAVED_WIFI_PROFILES 5
@@ -64,6 +65,7 @@ class Settings {
       // SCOUT-LITE
       String IgnoreSSIDs[MAX_IGNORE_SSIDS];
       uint8_t IgnoreCount = 0;
+      uint32_t WardriveSplitKB = 1024;
     } _cache;
 
     void _buildCache();  // parse json_settings_string -> _cache
@@ -101,6 +103,8 @@ class Settings {
     bool removeIgnoreSsid(uint8_t index);
     bool clearIgnoreSsids();
     bool isSsidIgnored(const String& ssid);
+    uint32_t loadWardriveSplitKb();
+    bool saveWardriveSplitKb(uint32_t kb);
     //bool createDefaultSettings(fs::FS &fs, bool spec = false, uint8_t index = 0, String typeStr = "bool", String name = "");
     bool createDefaultSettings(fs::FS &fs, bool spec = false, uint8_t index = 0, const char* typeStr = "bool", const char* name = "");
     void printJsonSettings(String json_string);

@@ -80,6 +80,28 @@ static JsonObject ensureIgnoreSetting(DynamicJsonDocument& json) {
   return setting;
 }
 
+// SCOUT-LITE
+static JsonObject findSplitSetting(DynamicJsonDocument& json) {
+  for (JsonObject setting : json["Settings"].as<JsonArray>()) {
+    if (strcmp(setting["name"] | "", WARDRIVE_SPLIT_KEY_NAME) == 0)
+      return setting;
+  }
+  return JsonObject();
+}
+
+static JsonObject ensureSplitSetting(DynamicJsonDocument& json) {
+  JsonObject setting = findSplitSetting(json);
+  if (!setting.isNull()) return setting;
+  setting = json["Settings"].as<JsonArray>().createNestedObject();
+  setting["name"] = WARDRIVE_SPLIT_KEY_NAME;
+  setting["type"] = "uint32";
+  setting["value"] = 1024;
+  JsonObject range = setting.createNestedObject("range");
+  range["min"] = 0;
+  range["max"] = 102400;
+  return setting;
+}
+
 static bool writeSettingsDocument(DynamicJsonDocument& json, String& cache) {
   File file = SPIFFS.open("/settings.json", FILE_WRITE);
   if (!file) return false;
@@ -141,6 +163,11 @@ void Settings::_buildCache() {
         _cache.IgnoreSSIDs[_cache.IgnoreCount++] = v.as<String>();
       }
     }
+    else if (strcmp(name, WARDRIVE_SPLIT_KEY_NAME) == 0) {
+      long kb = json["Settings"][i]["value"].as<long>();
+      if (kb == 0 || (kb >= 4 && kb <= 102400))
+        _cache.WardriveSplitKB = (uint32_t)kb;
+    }
   }
 }
 
@@ -195,6 +222,10 @@ bool Settings::begin() {
   // SCOUT-LITE
   if (findIgnoreSetting(jsonBuffer).isNull()) {
     ensureIgnoreSetting(jsonBuffer);
+    settings_changed = true;
+  }
+  if (findSplitSetting(jsonBuffer).isNull()) {
+    ensureSplitSetting(jsonBuffer);
     settings_changed = true;
   }
   if (dropSettingNamed(jsonBuffer, "t_ssid"))
@@ -659,6 +690,13 @@ bool Settings::createDefaultSettings(fs::FS &fs, bool spec, uint8_t index, const
     jsonBuffer["Settings"][12]["range"]["min"] = 0;
     jsonBuffer["Settings"][12]["range"]["max"] = MAX_GEOFENCES;
 
+    // SCOUT-LITE
+    jsonBuffer["Settings"][13]["name"] = WARDRIVE_SPLIT_KEY_NAME;
+    jsonBuffer["Settings"][13]["type"] = "uint32";
+    jsonBuffer["Settings"][13]["value"] = 1024;
+    jsonBuffer["Settings"][13]["range"]["min"] = 0;
+    jsonBuffer["Settings"][13]["range"]["max"] = 102400;
+
     serializeJson(jsonBuffer, settingsFile);
     serializeJson(jsonBuffer, settings_string);
   } else {
@@ -910,4 +948,19 @@ bool Settings::isSsidIgnored(const String& ssid) {
   for (uint8_t i = 0; i < _cache.IgnoreCount; i++)
     if (_cache.IgnoreSSIDs[i] == ssid) return true;
   return false;
+}
+
+uint32_t Settings::loadWardriveSplitKb() {
+  return _cache.WardriveSplitKB;
+}
+
+bool Settings::saveWardriveSplitKb(uint32_t kb) {
+  if (kb != 0 && (kb < 4 || kb > 102400)) return false;
+  DynamicJsonDocument json(JSON_SETTING_SIZE);
+  if (deserializeJson(json, this->json_settings_string)) return false;
+  JsonObject setting = ensureSplitSetting(json);
+  setting["value"] = kb;
+  if (!writeSettingsDocument(json, this->json_settings_string)) return false;
+  this->_buildCache();
+  return true;
 }

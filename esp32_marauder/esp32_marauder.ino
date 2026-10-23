@@ -37,6 +37,7 @@ https://www.online-utility.org/image/convert/to/XBM
 
 #include "settings.h"
 #include "CommandLine.h"
+#include "SigRoam.h" // SCOUT-LITE
 #include "ReconMission.h"
 #include "lang_var.h"
 
@@ -310,6 +311,7 @@ void setup()
       // Do some SD stuff
       if(!sd_obj.initSD())
         Serial.println(F("SD Card NOT Supported"));
+      sigroamNoteSdBoot(); // SCOUT-LITE
 
     #endif
   #endif
@@ -351,6 +353,7 @@ void setup()
     Serial.println(F("Current settings format not supported. Installing new default settings..."));
     settings_obj.createDefaultSettings(SPIFFS);
   }
+  sigroamLoadPersisted(); // SCOUT-LITE
 
   buffer_obj = Buffer();
 
@@ -359,6 +362,7 @@ void setup()
       // Do some SD stuff
       if(!sd_obj.initSD())
         Serial.println(F("SD Card NOT Supported"));
+      sigroamNoteSdBoot(); // SCOUT-LITE
 
     #endif
   #endif

@@ -69,6 +69,8 @@ class SDInterface {
     String selected_file_name = "";
   
     bool initSD();
+    // SCOUT-LITE
+    bool pollIdle();
 
     LinkedList<String>* sd_files;
 

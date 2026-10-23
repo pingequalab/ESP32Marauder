@@ -598,3 +598,51 @@ bool SDInterface::performUpdate(Stream &updateSource, size_t updateSize) {
     return false;
   }
 }
+
+// SCOUT-LITE
+// cardType() is the value stored at mount (sd_diskio sdcard_type), so it does
+// not notice a card pulled after begin. Removal is a failed root stat.
+// Insertion uses the same SD.begin pins as initSD and prints nothing.
+bool SDInterface::pollIdle() {
+  #ifndef HAS_SD
+    return false;
+  #else
+    #ifdef KIT
+      pinMode(SD_DET, INPUT);
+      if (digitalRead(SD_DET) != LOW) {
+        if (this->supported) {
+          SD.end();
+          this->supported = false;
+          this->cardType = CARD_NONE;
+        }
+        return false;
+      }
+    #endif
+    if (this->supported) {
+      if (SD.exists("/"))
+        return true;
+      SD.end();
+      this->supported = false;
+      this->cardType = CARD_NONE;
+      return false;
+    }
+    #if (defined(MARAUDER_M5STICKC)) || (defined(HAS_CYD_TOUCH)) || (defined(MARAUDER_CARDPUTER)) || (defined(MARAUDER_CARDPUTER_ADV))
+      if (this->spiExt == nullptr || !SD.begin(SD_CS, *(this->spiExt)))
+        return false;
+    #elif defined(HAS_C5_SD)
+      if (this->_spi == nullptr || !SD.begin(SD_CS, *(this->_spi)))
+        return false;
+    #else
+      if (!SD.begin(SD_CS))
+        return false;
+    #endif
+    this->cardType = SD.cardType();
+    if (this->cardType == CARD_NONE) {
+      SD.end();
+      this->supported = false;
+      return false;
+    }
+    this->supported = true;
+    return true;
+  #endif
+}

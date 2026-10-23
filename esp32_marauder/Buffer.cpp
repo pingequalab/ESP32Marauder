@@ -1,4 +1,5 @@
 #include "Buffer.h"
+#include "SigRoam.h"
 #include "PcapHeader.h"
 #include "lang_var.h"
 
@@ -184,27 +185,39 @@ void Buffer::write(const uint8_t* buf, uint32_t len){
 }
 
 void Buffer::saveFs(){
+  const bool wardrive = fileName.indexOf("wardrive_") >= 0;
   file = fs->open(fileName, FILE_APPEND);
   if (!file) {
     Serial.println(text02+fileName+"'");
+    if (wardrive)
+      sigroamNoteSdDrop();
     return;
   }
 
+  size_t expect = 0;
+  size_t wrote = 0;
   if(useA){
     if(bufSizeB > 0){
-      file.write(bufB, bufSizeB);
+      expect += bufSizeB;
+      wrote += file.write(bufB, bufSizeB);
     }
     if(bufSizeA > 0){
-      file.write(bufA, bufSizeA);
+      expect += bufSizeA;
+      wrote += file.write(bufA, bufSizeA);
     }
   } else {
     if(bufSizeA > 0){
-      file.write(bufA, bufSizeA);
+      expect += bufSizeA;
+      wrote += file.write(bufA, bufSizeA);
     }
     if(bufSizeB > 0){
-      file.write(bufB, bufSizeB);
+      expect += bufSizeB;
+      wrote += file.write(bufB, bufSizeB);
     }
   }
+
+  if (wardrive && wrote != expect)
+    sigroamNoteSdDrop();
 
   // SCOUT-LITE
   size_t written = file.size();
@@ -214,8 +227,14 @@ void Buffer::saveFs(){
     createFile(rotate_name, false);
     File next = fs->open(fileName, FILE_APPEND);
     if (next) {
-      next.print(rotate_header);
+      const size_t header_len = rotate_header.length();
+      const size_t header_wrote = next.print(rotate_header);
       next.close();
+      if (wardrive && header_wrote != header_len)
+        sigroamNoteSdDrop();
+    }
+    else if (rotate_name && strcmp(rotate_name, "wardrive") == 0) {
+      sigroamNoteSdDrop();
     }
   }
 }

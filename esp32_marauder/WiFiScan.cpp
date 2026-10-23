@@ -6326,6 +6326,9 @@ void WiFiScan::executeWarDrive() {
           if (this->seen_mac(this_bssid_raw))
             continue;
 
+          // SCOUT-LITE
+          sigroamNoteWifiChannel(WiFi.channel(i));
+
           String ssid = WiFi.SSID(i);
           // SCOUT-LITE
           bool ignored = settings_obj.isSsidIgnored(ssid);

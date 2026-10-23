@@ -58,13 +58,13 @@ jobs:
       - name: Verify Installed Cores
         run: arduino-cli core list
 
-      - name: Build TestFile with ESP32 v3.3.4
+      - name: Build TestFile with ESP32 v3.3.12
         uses: ArminJo/arduino-test-compile@v3.2.1
         with:
           sketch-names: TestFile.ino
           arduino-board-fqbn: esp32:esp32:esp32s2
-          arduino-platform: esp32:esp32@3.3.4
-          platform-url: https://github.com/espressif/arduino-esp32/releases/download/3.3.4/package_esp32_dev_index.json
+          arduino-platform: esp32:esp32@3.3.12
+          platform-url: https://github.com/espressif/arduino-esp32/releases/download/3.3.12/package_esp32_dev_index.json
 
       - name: Verify Installed Cores Again
         run: arduino-cli core list
@@ -133,7 +133,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: h2zero/NimBLE-Arduino
-          ref: 2.3.8
+          ref: 2.5.1
           path: CustomNimBLE-Arduino
 
       - name: Install Adafruit_NeoPixel
@@ -191,8 +191,8 @@ jobs:
           for i in $(find /home/runner/.arduino15/packages/esp32/hardware/esp32/ -name "platform.txt"); do
             sed -i 's/compiler.c.elf.extra_flags=/compiler.c.elf.extra_flags=-Wl,-zmuldefs /' "$i"
           done
-          for f in $(find /home/runner/.arduino15/packages/esp32/tools/esp32-arduino-libs/ -name "cpp_flags"); do
-            sed -i 's/-fexceptions/-fno-exceptions/g' "$f"
+          for f in $(find /home/runner/.arduino15/packages/esp32/tools -name cpp_flags); do
+            sed -i 's/ -fexceptions/ -fno-exceptions/g' "$f"
           done
 
       - name: Build Marauder for ESP32-C5-DevKitC-1
@@ -201,5 +201,5 @@ jobs:
           sketch-names: esp32_marauder.ino
           arduino-board-fqbn: "esp32:esp32:esp32c5:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=enabled"
           extra-arduino-cli-args: "--warnings none --build-property compiler.cpp.extra_flags='-DMARAUDER_C5'"
-          arduino-platform: esp32:esp32@3.3.4
-          platform-url: https://github.com/espressif/arduino-esp32/releases/download/3.3.4/package_esp32_dev_index.json
+          arduino-platform: esp32:esp32@3.3.12
+          platform-url: https://github.com/espressif/arduino-esp32/releases/download/3.3.12/package_esp32_dev_index.json

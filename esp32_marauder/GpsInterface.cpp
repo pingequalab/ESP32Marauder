@@ -767,8 +767,9 @@ void GpsInterface::main() {
     char c = Serial2.read();
     //Serial.print(c);
     //Pass the character to the library
-    // SCOUT-LITE
+    // SCOUT-LITE: begin() only looks once. A later valid sentence means the module is up.
     if (nmea.process(c)) {
+      this->gps_enabled = true;
       const char* message_id = nmea.getMessageID();
       if (message_id && strcmp(message_id, "GGA") == 0) {
         this->gga_count++;

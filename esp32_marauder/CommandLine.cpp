@@ -887,6 +887,7 @@ void CommandLine::runCommand(String input) {
     // Wardrive
     else if (cmd_args.get(0) == WARDRIVE_CMD) {
       #ifdef HAS_GPS
+        gps_obj.main(); // SCOUT-LITE: cli runs before the loop drains Serial2
         if (gps_obj.getGpsModuleStatus()) {
           //int sta_sw = this->argSearch(&cmd_args, "-s");
           this->startScanFromCLI(WIFI_SCAN_WAR_DRIVE, TFT_GREEN, "Wardrive");

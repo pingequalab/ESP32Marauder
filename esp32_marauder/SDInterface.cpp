@@ -601,8 +601,10 @@ bool SDInterface::performUpdate(Stream &updateSource, size_t updateSize) {
 
 // SCOUT-LITE
 // cardType() is the value stored at mount (sd_diskio sdcard_type), so it does
-// not notice a card pulled after begin. Removal is a failed root stat.
-// Insertion uses the same SD.begin pins as initSD and prints nothing.
+// not notice a card pulled after begin. Removal is SD.open("/") failing.
+// exists("/") is not used: VFSImpl::exists opens the path read-only and a
+// directory can fail that. Insertion uses the same SD.begin pins as initSD
+// and prints nothing.
 bool SDInterface::pollIdle() {
   #ifndef HAS_SD
     return false;
@@ -619,7 +621,10 @@ bool SDInterface::pollIdle() {
       }
     #endif
     if (this->supported) {
-      if (SD.exists("/"))
+      File root = SD.open("/");
+      const bool present = root && root.isDirectory();
+      root.close();
+      if (present)
         return true;
       SD.end();
       this->supported = false;

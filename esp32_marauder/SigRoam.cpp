@@ -367,6 +367,22 @@ void sigroamRunCommand(LinkedList<String>& cmd_args) {
         }
       #endif
     }
+    else if (sub == "wifi") {
+      uint8_t n = settings_obj.getSavedWifiCount();
+      uint8_t i;
+      Serial.printf("wifi count %u\n", (unsigned)n);
+      for (i = 0; i < n && i < MAX_SAVED_WIFI_PROFILES; i++) {
+        String ssid;
+        String password;
+        if (!settings_obj.loadSavedWifiCredential(i, ssid, password))
+          continue;
+        Serial.print(F("wifi "));
+        Serial.print(i);
+        Serial.print(' ');
+        Serial.println(ssid);
+      }
+      Serial.println(F("wifi end"));
+    }
     else if (sub == "split") {
       if (cmd_args.size() > 2) {
         String arg = cmd_args.get(2);

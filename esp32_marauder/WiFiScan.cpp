@@ -11762,6 +11762,117 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
 }
 
 #ifdef HAS_DIRECT_UPLOAD
+  // 5000 ms is idle time between bytes. The peer may keep the socket open
+  // after a full HTTP response (Connection: keep-alive).
+  struct UploadHttpRead {
+    bool got_any;
+    bool complete;
+    bool idle_timeout;
+  };
+
+  static int uploadContentLength(const String& msg, int headerBytes) {
+    static const char key[] = "content-length:";
+    const int keyLen = 15;
+    for (int i = 0; i + keyLen < headerBytes; i++) {
+      bool match = true;
+      for (int j = 0; j < keyLen; j++) {
+        char c = msg[i + j];
+        if (c >= 'A' && c <= 'Z')
+          c = c - 'A' + 'a';
+        if (c != key[j]) {
+          match = false;
+          break;
+        }
+      }
+      if (!match)
+        continue;
+      int p = i + keyLen;
+      while (p < headerBytes && (msg[p] == ' ' || msg[p] == '\t'))
+        p++;
+      long n = 0;
+      bool any = false;
+      while (p < headerBytes && msg[p] >= '0' && msg[p] <= '9') {
+        any = true;
+        n = n * 10 + (msg[p] - '0');
+        if (n > 8192)
+          n = 8192;
+        p++;
+      }
+      if (any)
+        return (int)n;
+    }
+    return -1;
+  }
+
+  static bool uploadWriteAll(WiFiClientSecure* client, const uint8_t* data, size_t len) {
+    size_t sent = 0;
+    while (sent < len) {
+      size_t n = client->write(data + sent, len - sent);
+      if (n == 0)
+        return false;
+      if (n > len - sent)
+        n = len - sent;
+      sent += n;
+    }
+    return true;
+  }
+
+  static UploadHttpRead uploadReadHttp(WiFiClientSecure* client, String& response) {
+    UploadHttpRead out;
+    out.got_any = false;
+    out.complete = false;
+    out.idle_timeout = false;
+    response = "";
+    bool headersDone = false;
+    bool haveLength = false;
+    int contentLength = 0;
+    size_t bodyGot = 0;
+    unsigned long lastRx = millis();
+
+    while ((unsigned long)(millis() - lastRx) < 5000UL) {
+      while (client->available()) {
+        char c = client->read();
+        out.got_any = true;
+        Serial.print(c);
+        response += c;
+        lastRx = millis();
+
+        if (!headersDone) {
+          if (response.endsWith("\r\n\r\n")) {
+            headersDone = true;
+            int n = uploadContentLength(response, response.length());
+            if (n >= 0) {
+              haveLength = true;
+              contentLength = n;
+            }
+            if (haveLength && contentLength == 0) {
+              out.complete = true;
+              break;
+            }
+          }
+        } else if (haveLength) {
+          bodyGot++;
+          if (bodyGot >= (size_t)contentLength) {
+            out.complete = true;
+            break;
+          }
+        }
+      }
+      if (out.complete)
+        break;
+      if (out.got_any && !client->connected() && !client->available()) {
+        if (headersDone && (!haveLength || bodyGot >= (size_t)contentLength))
+          out.complete = true;
+        break;
+      }
+      delay(10);
+    }
+
+    if (!out.complete && (unsigned long)(millis() - lastRx) >= 5000UL)
+      out.idle_timeout = true;
+    return out;
+  }
+
   // GCOVR_EXCL_START -- host tests do not provide a TFT implementation.
   #ifdef HAS_SCREEN
   void WiFiScan::drawUploadProgress(const char* service, uint8_t percent, bool waiting) {
@@ -11956,7 +12067,6 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
   // Upload one log file to WDG Wars.
   // Mirrors backendUpload() but uses X-API-Key auth and wdgwars.pl endpoint.
   bool WiFiScan::wdgwarsUpload(String filePath) {
-    bool gotAny = false;
 
     #ifdef HAS_SCREEN
     this->drawUploadProgress("WDG WARS", 0); // GCOVR_EXCL_LINE
@@ -12033,7 +12143,7 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
     client->println();
 
     // Send body
-    client->print(part1);
+    bool transportOk = uploadWriteAll(client, (const uint8_t*)part1.c_str(), part1.length());
 
     marauder::UploadStreamBuffer uploadBuffer;
     if (!uploadBuffer) {
@@ -12045,19 +12155,34 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
     size_t totalSent = 0;
     uint8_t pct = 0;
 
-    while (fileToUpload.available()) {
+    while (transportOk && fileToUpload.available()) {
       size_t n = fileToUpload.read(uploadBuffer.data(), uploadBuffer.size());
+      if (n == 0)
+        break;
+      if (!uploadWriteAll(client, uploadBuffer.data(), n)) {
+        transportOk = false;
+        break;
+      }
       totalSent += n;
-      client->write(uploadBuffer.data(), n);
       pct = (totalSent * 100) / fileToUpload.size();
       #ifdef HAS_SCREEN
       this->drawUploadProgress("WDG WARS", pct); // GCOVR_EXCL_LINE
       #endif
     }
 
-    client->print(part2);
+    if (transportOk)
+      transportOk = uploadWriteAll(client, (const uint8_t*)part2.c_str(), part2.length());
     client->flush();
     fileToUpload.close();
+
+    if (!transportOk) {
+      client->stop();
+      #ifdef HAS_SCREEN
+      display_obj.clearScreen();
+      display_obj.showCenterText("WDG Failed", TFT_HEIGHT / 2, true);
+      #endif
+      return false;
+    }
 
     Serial.println("[WDG] Bytes sent: " + String(totalSent));
 
@@ -12067,22 +12192,7 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
 
     // Read response
     String response;
-    unsigned long t = millis();
-    while (millis() - t < 5000) {
-      while (client->available()) {
-        gotAny = true;
-        char c = client->read();
-        Serial.print(c);
-        response += c;
-      }
-      //if (!client->connected() && !client->available())
-      //  break;
-      if (gotAny && !client->connected()) {
-        break;
-      }
-
-      delay(10);
-    }
+    uploadReadHttp(client, response);
 
     Serial.println();
 
@@ -12147,7 +12257,6 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
 
   // Upload one log file to Wigle
   bool WiFiScan::wigleUpload(String filePath) {
-    bool gotAny = false;
 
     #ifdef HAS_SCREEN
     this->drawUploadProgress("WiGLE", 0); // GCOVR_EXCL_LINE
@@ -12254,7 +12363,7 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
     Serial.println("Finished sending header");
 
     // Send body
-    client->print(part1);
+    bool transportOk = uploadWriteAll(client, (const uint8_t*)part1.c_str(), part1.length());
     marauder::UploadStreamBuffer uploadBuffer;
     if (!uploadBuffer) {
       fileToUpload.close();
@@ -12263,13 +12372,28 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
       return false;
     }
 
+    if (!transportOk) {
+      fileToUpload.close();
+      client->stop();
+      #ifdef HAS_SCREEN
+      display_obj.clearScreen();
+      display_obj.showCenterText("WIGLE Failed", TFT_HEIGHT / 2, true);
+      #endif
+      return false;
+    }
     Serial.println("Finished sending part1");
 
     uint8_t percent_sent = 0;
 
     size_t totalBytesSent = 0;
-    while (fileToUpload.available()) {
+    while (transportOk && fileToUpload.available()) {
       size_t bytesRead = fileToUpload.read(uploadBuffer.data(), uploadBuffer.size());
+      if (bytesRead == 0)
+        break;
+      if (!uploadWriteAll(client, uploadBuffer.data(), bytesRead)) {
+        transportOk = false;
+        break;
+      }
       totalBytesSent += bytesRead;
       Serial.print("Writing ");
       Serial.print(totalBytesSent);
@@ -12278,14 +12402,25 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
       #ifdef HAS_SCREEN
       this->drawUploadProgress("WiGLE", percent_sent); // GCOVR_EXCL_LINE
       #endif
-      client->write(uploadBuffer.data(), bytesRead);
     }
 
     Serial.println("Uploaded file bytes: " + String(totalBytesSent));
 
-    client->print(part2);
-    client->print(part3);
+    if (transportOk) {
+      transportOk = uploadWriteAll(client, (const uint8_t*)part2.c_str(), part2.length()) &&
+                    uploadWriteAll(client, (const uint8_t*)part3.c_str(), part3.length());
+    }
     client->flush();
+    fileToUpload.close();
+
+    if (!transportOk) {
+      client->stop();
+      #ifdef HAS_SCREEN
+      display_obj.clearScreen();
+      display_obj.showCenterText("WIGLE Failed", TFT_HEIGHT / 2, true);
+      #endif
+      return false;
+    }
 
     Serial.println("Finished sending part2 and part3");
 
@@ -12293,38 +12428,21 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
       this->drawUploadProgress("WiGLE", 100, true); // GCOVR_EXCL_LINE
     #endif
 
-    fileToUpload.close();
-
-    // Read response
+    // Read response. Idle timeout, and stop when the HTTP message is complete.
     String response;
-    unsigned long timeout = millis();
-    while (millis() - timeout < 5000) {
-      while (client->available()) {
-        gotAny = true;
-        char c = client->read();
-        Serial.print(c);
-        response += c;
-      }
-
-      if (gotAny && !client->connected()) {
-        break;
-      }
-
-
-      delay(10);
-    }
+    UploadHttpRead http = uploadReadHttp(client, response);
 
     Serial.println();
 
-    if (!gotAny) {
+    if (!http.got_any) {
       Serial.println("[WIGLE] No response bytes received");
     }
 
-    if (millis() - timeout >= 5000)
+    if (http.idle_timeout)
       Serial.println("Timeout reached");
     if (!client->connected())
       Serial.println("Client disconnected");
-        
+
     client->stop();
 
     String respTrunc = response.length() > 200 ? response.substring(0, 200) : response;

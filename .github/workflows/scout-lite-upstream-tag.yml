@@ -9,7 +9,7 @@ name: Scout Lite upstream tag
 
 on:
   schedule:
-    - cron: "17 4 * * *"
+    - cron: "19 4 * * *" # runs daily at 04:19 UTC
 
 permissions:
   contents: read

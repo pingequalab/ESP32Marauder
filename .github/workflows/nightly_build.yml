@@ -426,8 +426,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: [decide, post_compile_steps]
     if: ${{ needs.decide.outputs.should_build == 'true' }}
+    # secrets.* is not allowed in if. The existing token is copied to an env var
+    # so the dispatch can run on upstream, or anywhere that token is actually set.
+    env:
+      PRIVATE_TFT_BUILD_TOKEN: ${{ secrets.PRIVATE_TFT_BUILD_TOKEN }}
     steps:
       - name: Dispatch exact-source private nightly builds
+        id: dispatch
+        if: ${{ github.repository == 'justcallmekoko/ESP32Marauder' || env.PRIVATE_TFT_BUILD_TOKEN != '' }}
         env:
           GH_TOKEN: ${{ secrets.PRIVATE_TFT_BUILD_TOKEN }}
         run: |
@@ -448,6 +454,7 @@ jobs:
             'https://api.github.com/repos/justcallmekoko/TFT_eSPI_JCMK/actions/workflows/private-c5-build.yml/dispatches'
 
       - name: Wait for private nightly binaries
+        if: ${{ steps.dispatch.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
